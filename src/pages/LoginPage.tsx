@@ -4,13 +4,13 @@ import { useAuthContext } from "@/hooks/useAuth";
 import { FC, useState } from "react";
 
 export const LoginPage: FC = () => {
-  const onError = (error: any) => console.error(error);
   const authContext = useAuthContext();
   const apiClient = new ApiClient(authContext);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const onSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     if (isSubmitting) return;
@@ -20,7 +20,14 @@ export const LoginPage: FC = () => {
       const response = await apiClient.requestToken(username, password);
       const newToken = await response.text();
       authContext.setData({ token: newToken });
-    }).catch(onError);
+    }).catch((error: any) => {
+      const response = error.response as Response;
+      if (response.status >= 400 && response.status < 500) {
+        setErrorMessage("Incorrect username or password. Please try again.");
+      } else {
+        setErrorMessage(`Error ${response.status}.`);
+      }
+    });
     setIsSubmitting(false);
   };
   return (
@@ -57,11 +64,13 @@ export const LoginPage: FC = () => {
               onChange={(event) => setPassword(event.target.value)}
             />
           </div>
-          <div className="mb-4" id="login-error" style={{ display: "none" }}>
-            <p className="text-red-500 text-md italic" id="error-message">
-              Incorrect username or password. Please try again.
-            </p>
-          </div>
+          {errorMessage && (
+            <div className="mb-4" id="login-error">
+              <p className="text-red-500 text-md italic" id="error-message">
+                {errorMessage}
+              </p>
+            </div>
+          )}
           <div className="flex items-center justify-center">
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center"
