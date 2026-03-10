@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "strictNullChecks": true,
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+
+    "allowImportingTsExtensions": true,
+    "types": ["@types/react"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "preact": ["src/jsreact/preact"],
+      "preact-iso": ["src/jsreact/preact-iso"]
+    }
+  },
+  "include": ["node_modules/vite/client.d.ts", "src/**/*"]
+}
