@@ -1058,7 +1058,8 @@ function useLegacySetStateCallback(callback: (() => void) | null | undefined) {
 type Hook = { $$typeof?: symbol };
 type NamedHook<T = {}> = T & Required<Hook>;
 export function useRerender() {
-  return useCallback(() => rerender($component), []);
+  const component = $component;
+  return useCallback(() => rerender(component), []);
 }
 export function useHook<T extends object>(defaultState: T = {} as T): T {
   const component = $component;
