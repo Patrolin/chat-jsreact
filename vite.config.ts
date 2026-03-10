@@ -1,10 +1,11 @@
-import { defineConfig, UserConfig } from "vite";
 import path from "path";
+import { defineConfig, UserConfig } from "vite";
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   const config: UserConfig = {
-    envPrefix: ["VITE_", "JSREACT_"],
+    envPrefix: ["VITE_", "JSREACT_", "CHAT_"],
     resolve: { alias: [
       { find: "@", replacement: path.resolve(__dirname, "src") },
       { find: "react", replacement: path.resolve(__dirname, "src/jsreact") },
@@ -12,6 +13,7 @@ export default defineConfig(() => {
       { find: "preact", replacement: path.resolve(__dirname, "src/jsreact/preact") },
       { find: "preact-iso", replacement: path.resolve(__dirname, "src/jsreact/preact-iso") },
     ] },
+    plugins: [tailwindcss()],
     server: { port: 3000, strictPort: true },
   };
   return config;

@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+.material-icons {
+  user-select: none;
+}
+.preload-icon-font {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+button:not([disabled]) {
+  cursor: pointer;
+}
