@@ -4,11 +4,8 @@ import { useRerender } from "../jsreact";
 // LocationContext
 function route(url: string, replace?: boolean): void {
   const rerender = useRerender();
-  if (replace) {
-    window.history.replaceState(undefined, "", url);
-  } else {
-    window.history.pushState(undefined, "", url);
-  }
+  if (replace) window.history.replaceState(undefined, "", url);
+  else window.history.pushState(undefined, "", url);
   rerender();
 }
 type LocationContextType = {
