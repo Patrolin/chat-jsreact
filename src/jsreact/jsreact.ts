@@ -1181,15 +1181,20 @@ export function useDebugValue<T>(_value: T, _formatter?: (value: T) => any) {
 export function useReducer<S, A>(reducer: (state: S, action: A) => S, initialArg: S, init?: (initialArg: S) => S): [S, (action: A) => void] {
   const component = $component;
   const prevHookCount = component.hooks.length;
-  const hook = useHook({ state: undefined as S });
+  const hook = useHook({
+    state: undefined as S,
+    dispatch: (_action: A) => {},
+    reducer,
+  });
   if (component.hookIndex > prevHookCount) {
     if (init != null) hook.state = init(initialArg);
     else hook.state = initialArg;
+    hook.dispatch = (action: A) => setTimeout(() => {
+      hook.state = hook.reducer(hook.state, action);
+      rerender($component);
+    }, 0)
   }
-  const dispatch = (action: A) => setTimeout(() => {
-    hook.state = reducer(hook.state, action);
-    rerender($component);
-  }, 0);
-  return [hook.state, dispatch];
+  hook.reducer = reducer;
+  return [hook.state, hook.dispatch];
 }
 // TODO: more hooks?

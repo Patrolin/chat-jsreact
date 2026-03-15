@@ -1,34 +1,37 @@
 import { ApiClient } from "@/api/ApiClient";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuthContext } from "@/hooks/useAuth";
-import { FC, useState } from "react";
+import { useChangeState } from "@/hooks/useChangeState";
+import { FC } from "react";
 
 export const LoginPage: FC = () => {
   const authContext = useAuthContext();
   const apiClient = new ApiClient(authContext);
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [state, changeState] = useChangeState({
+    username: "",
+    password: "",
+    submitting: false,
+    errorMessage: "",
+  });
   const onSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (state.submitting) return;
 
-    setIsSubmitting(true);
+    changeState({ submitting: true });
     await Promise.try(async () => {
-      const response = await apiClient.requestToken(username, password);
-      const newToken = await response.text();
-      authContext.setData({ token: newToken });
+      const rawResponse = await apiClient.requestToken(state.username, state.password);
+      const response = await rawResponse.json();
+      authContext.setData({ token: response.token });
     }).catch((error: any) => {
       const response = error.response as Response;
       if (response.status >= 400 && response.status < 500) {
-        setErrorMessage("Incorrect username or password. Please try again.");
+        changeState({ errorMessage: "Incorrect username or password. Please try again." });
       } else {
-        setErrorMessage(`Error ${response.status}.`);
+        changeState({ errorMessage: `Error ${response.status}.` });
       }
     });
-    setIsSubmitting(false);
+    changeState({ submitting: false });
   };
   return (
     <div className="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -46,8 +49,8 @@ export const LoginPage: FC = () => {
               placeholder="Enter your username"
               autoFocus
               autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              value={state.username}
+              onChange={(event) => changeState({ username: event.target.value })}
             />
           </div>
           <div className="mb-2">
@@ -60,14 +63,14 @@ export const LoginPage: FC = () => {
               type="password"
               placeholder="Enter your password"
               autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              value={state.password}
+              onChange={(event) => changeState({ password: event.target.value })}
             />
           </div>
-          {errorMessage && (
+          {state.errorMessage && (
             <div className="mb-4" id="login-error">
               <p className="text-red-500 text-md italic" id="error-message">
-                {errorMessage}
+                {state.errorMessage}
               </p>
             </div>
           )}
@@ -77,7 +80,7 @@ export const LoginPage: FC = () => {
               type="submit"
               id="login-button"
             >
-              <LoadingSpinner className="mr-2" loading={isSubmitting} />
+              <LoadingSpinner className="mr-2" loading={state.submitting} />
               <span>Login</span>
             </button>
           </div>
