@@ -56,7 +56,7 @@ export class ApiClient {
         return await this.fetch(endpoint, data, "POST");
     }
     async fetch(endpoint: string, data: Record<string, any> = {}, method = "GET" as "GET"|"POST") {
-        // refresh token if necessary
+        // refresh the token if necessary
         let token = this.authContext.state.token;
         if (token != null && isTokenExpired(this.authContext)) {
             // NOTE: fetch() happens concurrently, but we only ever want one thread to refresh the token
