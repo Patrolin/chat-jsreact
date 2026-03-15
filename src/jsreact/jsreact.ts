@@ -485,7 +485,7 @@ function createElementAndApplyDOMProps(component: VirtNode, desiredElementType: 
   }
   // className
   const prevClassList = component.hooks as string[];
-  const newClassList = Array.isArray(className) ? className : (className ? className.split(" ") : []);
+  const newClassList = Array.isArray(className) ? className : (className ? className.split(" ") : []).filter(v => v);
   for (const newClass of newClassList) element.classList.add(newClass);
   const newClassList_set = new Set(newClassList);
   for (const prevClass of prevClassList) {

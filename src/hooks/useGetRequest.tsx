@@ -1,12 +1,12 @@
 import { useChangeState } from "./useChangeState";
 
-type Options<T> = {
-  defaultValue?: NoInfer<T>;
+type Options<T, D> = {
+  defaultValue?: D;
   fetch: (abortSignal: AbortSignal) => Promise<T>;
   disabled?: boolean;
   refetchOn?: any[];
 };
-export function useGetRequest<T>(options: Options<T>) {
+export function useGetRequest<T, D extends T | undefined>(options: Options<T, D>): [boolean, D, boolean] {
   const { defaultValue, fetch, disabled, refetchOn = [] } = options;
   const [state, changeState] = useChangeState({
     data: defaultValue,
@@ -25,9 +25,9 @@ export function useGetRequest<T>(options: Options<T>) {
     state.prevRefetchOn = refetchOn;
     state.abortController = abortController;
     Promise.try(() => fetch(abortController.signal)).then((data) => {
-      changeState({ data, loading: false, initiallyLoading: false, abortController: null });
+      changeState({ data: data as D, loading: false, initiallyLoading: false, abortController: null });
     });
   }
   if (disabled) state.loading = false;
-  return [state.loading, state.data, state.initiallyLoading];
+  return [state.loading, state.data as D, state.initiallyLoading];
 }

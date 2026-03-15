@@ -1,4 +1,7 @@
 @import "tailwindcss";
+.jsreact-error {
+	padding: 16px;
+}
 
 .material-icons {
   user-select: none;

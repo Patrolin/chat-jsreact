@@ -5,6 +5,7 @@ export function useChangeState<T extends Record<string, any>>(defaultState: T): 
   const [state, rerender] = useReducer((v) => v, defaultState);
   const changeState = useCallback(
     (diff: Partial<T>) => {
+      if (Object.keys(diff).every((k) => Object.is(diff[k], state[k]))) return;
       Object.assign(state, diff);
       rerender();
     },
