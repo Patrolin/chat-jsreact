@@ -1,19 +1,18 @@
 import { ApiClient } from "@/api/ApiClient";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { useAuthContext } from "@/hooks/useAuth";
 import { useChangeState } from "@/hooks/useChangeState";
+import { useCommon } from "@/hooks/useCommon";
 import { FC } from "react";
 
 export const LoginPage: FC = () => {
-  const authContext = useAuthContext();
-  const apiClient = new ApiClient(authContext);
-
+  const { authContext, route } = useCommon();
   const [state, changeState] = useChangeState({
     username: "",
     password: "",
     submitting: false,
     errorMessage: "",
   });
+  const apiClient = new ApiClient(authContext);
   const onSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     if (state.submitting) return;
@@ -23,6 +22,7 @@ export const LoginPage: FC = () => {
       const rawResponse = await apiClient.requestToken(state.username, state.password);
       const response = await rawResponse.json();
       authContext.setData({ token: response.token });
+      route("/client");
     }).catch((error: any) => {
       const response = error.response as Response;
       if (response.status >= 400 && response.status < 500) {
