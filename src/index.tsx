@@ -19,7 +19,7 @@ export const App: FC = () => {
               component={() => {
                 const auth = useAuthContext();
                 document.title = route.label ?? "chat-jsreact";
-                if (auth.data.current == null) {
+                if (auth.state.token == null) {
                   if (route.path === "/") return <WelcomePage />;
                   else return <LoginPage />;
                 }

@@ -6,6 +6,7 @@ export function useCommon() {
   const location = useLocation();
   return {
     authContext,
+    currentUser: authContext.state.parsed.sub,
     ...location,
   };
 }

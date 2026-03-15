@@ -21,7 +21,7 @@ export const LoginPage: FC = () => {
     await Promise.try(async () => {
       const rawResponse = await apiClient.requestToken(state.username, state.password);
       const response = await rawResponse.json();
-      authContext.setData({ token: response.token });
+      authContext.setToken(response.token);
       route("/client");
     }).catch((error: any) => {
       const response = error.response as Response;
