@@ -1,9 +1,8 @@
-import { createContext, FC, Fragment, PropsWithChildren, useContext, useRef } from "react";
-import { useRerender } from "../jsreact";
+import { createContext, FC, Fragment, PropsWithChildren, useContext, useReducer, useRef } from "react";
 
 // LocationContext
 function route(url: string, replace?: boolean): void {
-  const rerender = useRerender();
+  const [_, rerender] = useReducer((v) => v, undefined);
   if (replace) window.history.replaceState(undefined, "", url);
   else window.history.pushState(undefined, "", url);
   rerender();
