@@ -126,6 +126,7 @@ export const ClientPage: FC = () => {
               const isSelected = state.selectedView === option.value;
               return (
                 <h2
+                  key={i}
                   className={`text-lg md:text-md hover:bg-blue-600 rounded-full cursor-pointer px-4 py-2 mr-2 text-white font-bold ${isSelected ? "bg-blue-500" : "bg-blue-400"}`}
                   onClick={() => changeState({ selectedView: option.value })}
                 >
