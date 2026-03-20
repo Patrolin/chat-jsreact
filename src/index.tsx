@@ -4,7 +4,6 @@ import { LocationProvider, Route, Router } from "preact-iso";
 import "./styles.css";
 import { AuthContextProvider, useAuthContext } from "./hooks/useAuth";
 import { routes } from "./routes";
-import { WelcomePage } from "./pages/WelcomePage";
 import { LoginPage } from "./pages/LoginPage";
 
 export const App: FC = () => {
@@ -19,10 +18,7 @@ export const App: FC = () => {
               component={() => {
                 const auth = useAuthContext();
                 document.title = route.label ?? "chat-jsreact";
-                if (auth.state.token == null) {
-                  if (route.path === "/") return <WelcomePage />;
-                  else return <LoginPage />;
-                }
+                if (auth.state.token == null && route.path !== "/") return <LoginPage />;
                 return <route.component />;
               }}
             />
