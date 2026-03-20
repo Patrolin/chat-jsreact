@@ -94,7 +94,7 @@ export const ClientPage: FC = () => {
     }
   })();
   const { messagesLoading, messages, postMessage } = useMessages(authContext, state.selectedChannel);
-  console.log("ayaya.ClientPage", state);
+  console.log("ayaya.ClientPage", state, messages);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
     { value: ChannelType.User, label: "Users" },

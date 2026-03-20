@@ -2,7 +2,7 @@ import { MessageControllerApi, OutboundChatMessage } from "@/api";
 import { CHAT_DEFAULT_PAGE_SIZE, getAuthConfigWithBearer } from "@/config";
 import { AuthContext } from "./useAuth";
 import { useGetRequest } from "./useGetRequest";
-import { useCallback, useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 
 export enum ChannelType {
   User = "USER",
@@ -19,7 +19,7 @@ function getChannelDestination(selectedChannel: MessagesChannel) {
 
 export function useMessages(authContext: AuthContext, selectedChannel: MessagesChannel) {
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
-  const [messagesLoading, messages, refetchMessages] = useGetRequest({
+  const [messagesLoading, defaultMessages] = useGetRequest({
     defaultValue: [],
     fetch: async () => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
@@ -33,11 +33,12 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     refetchOn: [JSON.stringify(selectedChannel)],
   });
+  const messages = useMemo(() => (messagesLoading ? [] : [...defaultMessages]), [messagesLoading, defaultMessages]);
   type NewMessages = {
     atEnd: boolean;
     messages: OutboundChatMessage[];
   };
-  const [_, rerender] = useReducer((v) => v, undefined);
+  const [_, forceRerender] = useReducer((v) => v, undefined);
   const addMessages = useCallback(
     (newMessages: NewMessages) => {
       if (newMessages.atEnd) {
@@ -45,14 +46,14 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
       } else {
         messages.splice(0, 0, ...newMessages.messages);
       }
-      rerender();
+      forceRerender();
     },
-    [messages, rerender]
+    [messages, forceRerender]
   );
   const postMessage = useCallback(
     async (newMessage: string) => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
-      await messageApi.messageCreate_Post({
+      const response = await messageApi.messageCreate_Post({
         destinationType,
         destination,
         message: {
@@ -60,9 +61,12 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
           content: newMessage,
         },
       });
-      refetchMessages();
+      addMessages({
+        atEnd: true,
+        messages: [response],
+      });
     },
-    [addMessages, refetchMessages]
+    [addMessages]
   );
   return { messagesLoading, messages, postMessage };
 }
