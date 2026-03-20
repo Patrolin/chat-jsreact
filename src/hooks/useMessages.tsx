@@ -2,7 +2,7 @@ import { MessageControllerApi, OutboundChatMessage } from "@/api";
 import { CHAT_DEFAULT_PAGE_SIZE, getAuthConfigWithBearer } from "@/config";
 import { AuthContext } from "./useAuth";
 import { useGetRequest } from "./useGetRequest";
-import { useCallback } from "react";
+import { useCallback, useReducer } from "react";
 
 export enum ChannelType {
   User = "USER",
@@ -30,12 +30,17 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     atEnd: boolean;
     messages: OutboundChatMessage[];
   };
-  const addMessages = useCallback((newMessages: NewMessages) => {
-    if (newMessages.atEnd) {
-      messages.splice(messages.length, 0, ...newMessages.messages);
-    } else {
-      messages.splice(0, 0, ...newMessages.messages);
-    }
-  }, []);
+  const [_, rerender] = useReducer((v) => v, undefined);
+  const addMessages = useCallback(
+    (newMessages: NewMessages) => {
+      if (newMessages.atEnd) {
+        messages.splice(messages.length, 0, ...newMessages.messages);
+      } else {
+        messages.splice(0, 0, ...newMessages.messages);
+      }
+      rerender();
+    },
+    [messages, rerender]
+  );
   return [messagesLoading, messages, addMessages];
 }
