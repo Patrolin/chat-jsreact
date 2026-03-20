@@ -13,3 +13,6 @@ export function useChangeState<T extends Record<string, any>>(defaultState: T): 
   );
   return [state, changeState];
 }
+export function dependenciesDiffer(a: any[] | undefined, b: any[] | undefined) {
+  return a == null || b == null || a.length !== b.length || !b.every((v, i) => Object.is(v, a[i]));
+}

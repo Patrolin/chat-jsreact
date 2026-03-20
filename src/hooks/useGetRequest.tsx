@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useChangeState } from "./useChangeState";
+import { dependenciesDiffer, useChangeState } from "./useChangeState";
 
 // cache requests
 type CachedRequest<T = any> = {
@@ -19,9 +19,6 @@ function setCachedRequest<T>(cacheId: string | undefined, refetchOn: any[] | und
 }
 
 // get request
-function dependenciesDiffer(a: any[] | undefined, b: any[] | undefined) {
-  return a == null || b == null || a.length !== b.length || !b.every((v, i) => Object.is(v, a[i]));
-}
 type DefaultValue<T, D> = D extends undefined ? T | D : T;
 type UseGetRequestOptions<T, D> = {
   defaultValue?: DefaultValue<T, D>;

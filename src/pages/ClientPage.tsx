@@ -93,7 +93,7 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
-  const { messagesLoading, messages, postMessage } = useMessages(authContext, state.selectedChannel);
+  const { messagesLoading, messages, submitMessage, messagesOnScroll } = useMessages(authContext, state.selectedChannel);
   console.log("ayaya.ClientPage", state, messages);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
@@ -103,11 +103,11 @@ export const ClientPage: FC = () => {
   const onSubmit = useCallback(() => {
     const inputElement = inputRef.current;
     if (inputElement && state.newMessage) {
-      postMessage(state.newMessage);
+      submitMessage(state.newMessage);
       inputElement.value = "";
       changeState({ newMessage: "" });
     }
-  }, [state, postMessage]);
+  }, [state, submitMessage]);
   return (
     <div className="bg-gray-100 flex h-screen">
       <div className="z-80 bg-gray-100 border-r border-gray-300 md:p-4 p-2 md:block hidden md:w-1/4 w-full md:relative fixed h-full overflow-y-auto">
@@ -141,8 +141,30 @@ export const ClientPage: FC = () => {
         <div className="bg-white border-b border-gray-300 md:p-4 p-2 flex justify-between items-center">
           <h2 className="text-lg font-bold">{selectedChannelName}</h2>
         </div>
-        <div className="flex-1 flex flex-col-reverse overflow-y-auto px-4 py-2 w-full">
-          <div className="flex flex-col">..TODO: messages</div>
+        <div className="flex-1 flex flex-col-reverse overflow-y-auto px-4 py-2 w-full" onScroll={messagesOnScroll}>
+          <div className="flex flex-col">
+            {messages.map((message, i) => {
+              const isSelf = message.author === currentUser;
+              return (
+                <div key={i} className={`flex mb-2 ${isSelf ? "self-end text-white" : "items-start text-black"}`}>
+                  <div className={`rounded-lg p-2 md:max-w-xl max-w-sm ${isSelf ? "bg-blue-500" : "bg-gray-200"}`}>
+                    <div className={`relative text-sm font-semibold flex ${isSelf ? "justify-end" : "justify-start"}`}>
+                      {/*TODO: context menu */}
+                      <div>
+                        <span>{isSelf ? "You" : message.author}</span>
+                        <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
+                          {message.timestamp.split("T")[0]}
+                        </span>
+                      </div>
+                      {isSelf && <Icon name="more_vert" className="text-base pl-2 font-normal cursor-pointer font-semibold" />}
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    {/* TODO: attachments */}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
         <form
           className="bg-white border-t border-gray-300 pt-2 p-4 flex-shrink-0"
