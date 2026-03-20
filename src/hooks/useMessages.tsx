@@ -11,17 +11,24 @@ export enum ChannelType {
 export type UserChannel = { type: ChannelType.User; username: string };
 export type PublicChannel = { type: ChannelType.Public; id: number; name: string };
 export type MessagesChannel = UserChannel | PublicChannel;
+function getChannelDestination(selectedChannel: MessagesChannel) {
+  const destinationType = selectedChannel.type;
+  const destination = selectedChannel.type === ChannelType.User ? selectedChannel.username : String(selectedChannel.id);
+  return { destinationType, destination };
+}
+
 export function useMessages(authContext: AuthContext, selectedChannel: MessagesChannel) {
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
-  const [messagesLoading, messages] = useGetRequest({
+  const [messagesLoading, messages, refetchMessages] = useGetRequest({
     defaultValue: [],
     fetch: async () => {
-      const destination = selectedChannel?.type === ChannelType.User ? selectedChannel.username : selectedChannel.id;
+      const { destinationType, destination } = getChannelDestination(selectedChannel);
       const response = await messageApi.messageList_Get({
-        destinationType: selectedChannel?.type,
+        destinationType,
         destination,
-        pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE },
-      } as any);
+        messageId: undefined as any,
+        pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE, sort: undefined as any },
+      });
       return response.messages;
     },
     refetchOn: [JSON.stringify(selectedChannel)],
@@ -42,5 +49,20 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [messages, rerender]
   );
-  return [messagesLoading, messages, addMessages];
+  const postMessage = useCallback(
+    async (newMessage: string) => {
+      const { destinationType, destination } = getChannelDestination(selectedChannel);
+      await messageApi.messageCreate_Post({
+        destinationType,
+        destination,
+        message: {
+          clientId: undefined as any,
+          content: newMessage,
+        },
+      });
+      refetchMessages();
+    },
+    [addMessages, refetchMessages]
+  );
+  return { messagesLoading, messages, postMessage };
 }

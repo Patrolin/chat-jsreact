@@ -6,7 +6,7 @@ import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
 import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel } from "@/hooks/useMessages";
-import { FC } from "react";
+import { FC, useCallback, useRef } from "react";
 
 function isVisibleInSideView(label: string, search: string) {
   return search === "" || label.toLowerCase().includes(search);
@@ -93,12 +93,20 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
-  const [messagesLoading, messages, addMessages] = useMessages(authContext, state.selectedChannel);
+  const { messagesLoading, messages, postMessage } = useMessages(authContext, state.selectedChannel);
   console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
     { value: ChannelType.User, label: "Users" },
   ];
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const onSubmit = useCallback(() => {
+    const inputElement = inputRef.current;
+    if (inputElement) {
+      postMessage(state.newMessage);
+      inputElement.value = "";
+    }
+  }, [state, postMessage]);
   return (
     <div className="bg-gray-100 flex h-screen">
       <div className="z-80 bg-gray-100 border-r border-gray-300 md:p-4 p-2 md:block hidden md:w-1/4 w-full md:relative fixed h-full overflow-y-auto">
@@ -135,7 +143,13 @@ export const ClientPage: FC = () => {
         <div className="flex-1 flex flex-col-reverse overflow-y-auto px-4 py-2 w-full">
           <div className="flex flex-col">..TODO: messages</div>
         </div>
-        <div className="bg-white border-t border-gray-300 pt-2 p-4 flex-shrink-0">
+        <form
+          className="bg-white border-t border-gray-300 pt-2 p-4 flex-shrink-0"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
           <div className="flex mt-1 overflow-y-auto" />
           <div className="flex mt-2">
             <input className="hidden" type="file" multiple />
@@ -143,17 +157,29 @@ export const ClientPage: FC = () => {
               <Icon className="text-4xl" name="attach_file" />
             </button>
             <textarea
+              ref={inputRef}
               style={{ fieldSizing: "content" }}
               className="flex-1 border border-l-0 border-gray-300 pl-1 pr-4 py-2 focus:outline-none resize-none text-area"
               autoFocus
               placeholder="Type your message..."
-              onChange={(event) => changeState({ newMessage: event.target.value })}
+              onInput={(event) => changeState({ newMessage: (event.target as HTMLTextAreaElement).value })}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  if (!event.shiftKey) {
+                    event.preventDefault();
+                    onSubmit();
+                  }
+                }
+              }}
             />
-            <button className="bg-blue-500 hover:bg-blue-600 text-white px-2 flex items-center rounded-r-lg focus:outline-none">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-2 flex items-center rounded-r-lg focus:outline-none"
+              type="submit"
+            >
               <Icon className="text-4xl" name="send" />
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
