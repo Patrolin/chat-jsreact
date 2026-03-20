@@ -40,7 +40,6 @@ export function useGetRequest<T, D extends T | undefined>(options: UseGetRequest
     abortController: null as AbortController | null,
     options,
   });
-
   // callbacks
   const _fetchAndRerender = useCallback(
     (rerender: boolean) => {
