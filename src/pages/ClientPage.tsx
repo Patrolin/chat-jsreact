@@ -1,10 +1,11 @@
-import { ChannelControllerApi, MessageControllerApi, UserControllerApi } from "@/api";
+import { ChannelControllerApi, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
 import { SideViewItem } from "@/components/SideViewItem";
-import { CHAT_DEFAULT_PAGE_SIZE, getAuthConfigWithBearer } from "@/config";
+import { getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
+import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel } from "@/hooks/useMessages";
 import { FC } from "react";
 
 function isVisibleInSideView(label: string, search: string) {
@@ -28,17 +29,10 @@ export const ClientPage: FC = () => {
     },
   });
   // selected view
-  enum ChannelType {
-    User = "USER",
-    Public = "CHANNEL",
-  }
-  type UserChannel = { type: ChannelType.User; username: string };
-  type PublicChannel = { type: ChannelType.Public; id: number; name: string };
-  type Channel = UserChannel | PublicChannel;
   const [state, changeState] = useChangeState({
     selectedView: ChannelType.User,
     search: "",
-    selectedChannel: { type: ChannelType.User, username: currentUser } as Channel,
+    selectedChannel: { type: ChannelType.User, username: currentUser } as MessagesChannel,
     newMessage: "",
   });
   const sideView: React.ReactNode = (() => {
@@ -99,25 +93,7 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
-  const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
-  const [messagesLoading, messages] = useGetRequest({
-    fetch: async () => {
-      if (state.selectedChannel?.type === ChannelType.User) {
-        return await messageApi.messageList_Get({
-          destinationType: state.selectedView,
-          destination: state.selectedChannel.username,
-          pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE },
-        } as any);
-      } else {
-        return await messageApi.messageList_Get({
-          destinationType: state.selectedView,
-          destination: state.selectedChannel.id,
-          pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE },
-        } as any);
-      }
-    },
-    refetchOn: [state.selectedView, JSON.stringify(state.selectedChannel)],
-  });
+  const [messagesLoading, messages, addMessages] = useMessages(authContext, state.selectedChannel);
   console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },

@@ -22,18 +22,21 @@ function setCachedRequest<T>(cacheId: string | undefined, refetchOn: any[] | und
 function dependenciesDiffer(a: any[] | undefined, b: any[] | undefined) {
   return a == null || b == null || a.length !== b.length || !b.every((v, i) => Object.is(v, a[i]));
 }
+type DefaultValue<T, D> = D extends undefined ? T | D : T;
 type UseGetRequestOptions<T, D> = {
-  defaultValue?: D;
+  defaultValue?: DefaultValue<T, D>;
   fetch: (abortSignal: AbortSignal) => Promise<T>;
   refetchOn?: any[];
   onError?: (errorOrResponse: any) => void;
   disabled?: boolean;
   cacheId?: string;
 };
-export function useGetRequest<T, D extends T | undefined>(options: UseGetRequestOptions<T, D>): [boolean, D, () => Promise<D>, boolean] {
+export function useGetRequest<T, D extends T | undefined = T | undefined>(
+  options: UseGetRequestOptions<T, D>
+): [boolean, DefaultValue<T, D>, () => Promise<T>, boolean] {
   // state
   const [state, changeState] = useChangeState({
-    data: options.defaultValue as D,
+    data: options.defaultValue as T,
     loading: true,
     initiallyLoading: true,
     prevRefetchOn: undefined as any[] | undefined,
@@ -51,8 +54,8 @@ export function useGetRequest<T, D extends T | undefined>(options: UseGetRequest
       return Promise.try(() => fetch(abortController.signal))
         .then((data: T) => {
           setCachedRequest(cacheId, refetchOn, data);
-          changeState({ data: data as D, loading: false, initiallyLoading: false, abortController: null }, true);
-          return data as D;
+          changeState({ data: data, loading: false, initiallyLoading: false, abortController: null }, true);
+          return data;
         })
         .catch((error) => {
           onError?.(error);
@@ -70,10 +73,10 @@ export function useGetRequest<T, D extends T | undefined>(options: UseGetRequest
   } else if (dependenciesDiffer(state.prevRefetchOn, refetchOn)) {
     const cachedResponse = getCachedResponse<T>(cacheId, refetchOn);
     if (cachedResponse != null) {
-      changeState({ data: cachedResponse as D, loading: false, initiallyLoading: false }, false);
+      changeState({ data: cachedResponse, loading: false, initiallyLoading: false }, false);
     } else {
       _fetchAndRerender(false);
     }
   }
-  return [state.loading, state.data, refetch, state.initiallyLoading];
+  return [state.loading, state.data as DefaultValue<T, D>, refetch, state.initiallyLoading];
 }
