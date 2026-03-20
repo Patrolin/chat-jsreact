@@ -102,9 +102,10 @@ export const ClientPage: FC = () => {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const onSubmit = useCallback(() => {
     const inputElement = inputRef.current;
-    if (inputElement) {
+    if (inputElement && state.newMessage) {
       postMessage(state.newMessage);
       inputElement.value = "";
+      changeState({ newMessage: "" });
     }
   }, [state, postMessage]);
   return (
