@@ -1,5 +1,6 @@
-import { ApiClient } from "@/api/ApiClient";
+import { AuthenticationControllerApi } from "@/api";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { getAuthConfig } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { FC } from "react";
@@ -12,15 +13,14 @@ export const LoginPage: FC = () => {
     submitting: false,
     errorMessage: "",
   });
-  const apiClient = new ApiClient(authContext);
+  const apiClient = new AuthenticationControllerApi(getAuthConfig());
   const onSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
     if (state.submitting) return;
 
     changeState({ submitting: true });
     await Promise.try(async () => {
-      const rawResponse = await apiClient.requestToken(state.username, state.password);
-      const response = await rawResponse.json();
+      const response = await apiClient.authLogin_Post({ username: state.username, password: state.password });
       authContext.setToken(response.token);
       route("/client");
     }).catch((error: any) => {

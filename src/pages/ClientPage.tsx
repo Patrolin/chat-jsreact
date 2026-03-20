@@ -1,6 +1,7 @@
-import { ApiClient } from "@/api/ApiClient";
+import { ChannelControllerApi, MessageControllerApi, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
 import { SideViewItem } from "@/components/SideViewItem";
+import { CHAT_DEFAULT_PAGE_SIZE, getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
@@ -12,25 +13,25 @@ function isVisibleInSideView(label: string, search: string) {
 export const ClientPage: FC = () => {
   // static data
   const { authContext, currentUser } = useCommon();
-  const apiClient = new ApiClient(authContext);
+  const userApi = new UserControllerApi(getAuthConfigWithBearer(authContext));
   const [usersLoading, users] = useGetRequest({
     defaultValue: [],
     fetch: async () => {
-      const rawResponse = await apiClient.listUsers();
-      return (await rawResponse.json()) as any[];
+      return await userApi.userList_Get();
     },
   });
+  const channelApi = new ChannelControllerApi(getAuthConfigWithBearer(authContext));
   const [channelsLoading, channels] = useGetRequest({
     defaultValue: [],
     fetch: async () => {
-      const rawResponse = await apiClient.listChannels();
-      return (await rawResponse.json()) as any[];
+      return await channelApi.channelList_Get();
     },
   });
   // selected view
   enum ChannelType {
-    User = "User",
-    Public = "Public",
+    User = "USER",
+    Public = "CHANNEL",
+    Self = "SELF",
   }
   type UserChannel = { type: ChannelType.User; username: string };
   type PublicChannel = { type: ChannelType.Public; id: number; name: string };
@@ -99,16 +100,21 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
+  const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
   const [messagesLoading, messages] = useGetRequest({
     fetch: async () => {
       if (state.selectedChannel?.type === ChannelType.User) {
-        const rawResponse = await apiClient.listUserMessages({ username: state.selectedChannel.username, page: 0 });
-        const response = await rawResponse.json();
-        return response as any[];
+        return await messageApi.messageList_Get({
+          destinationType: state.selectedView,
+          destination: state.selectedChannel.username,
+          pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE },
+        } as any);
       } else {
-        const rawResponse = await apiClient.listChannelMessages({ channelId: state.selectedChannel.id, page: 0 });
-        const response = await rawResponse.json();
-        return response as any[];
+        return await messageApi.messageList_Get({
+          destinationType: state.selectedView,
+          destination: state.selectedChannel.id,
+          pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE },
+        } as any);
       }
     },
   });
