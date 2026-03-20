@@ -31,7 +31,6 @@ export const ClientPage: FC = () => {
   enum ChannelType {
     User = "USER",
     Public = "CHANNEL",
-    Self = "SELF",
   }
   type UserChannel = { type: ChannelType.User; username: string };
   type PublicChannel = { type: ChannelType.Public; id: number; name: string };
@@ -117,6 +116,7 @@ export const ClientPage: FC = () => {
         } as any);
       }
     },
+    refetchOn: [state.selectedView, JSON.stringify(state.selectedChannel)],
   });
   console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [

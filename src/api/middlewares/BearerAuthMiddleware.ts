@@ -6,7 +6,7 @@ let refreshToken_lock: Promise<RefreshTokenResponseDto> | undefined;
 export class AuthMiddleware implements Middleware {
   constructor(protected readonly authContext: AuthContext) {}
   async pre(context: RequestContext): Promise<FetchParams | void> {
-    const headers = {...context.init.headers, Authorization: `bearer ${this.authContext.state.token}`};
+    const headers = {...context.init.headers, Authorization: `Bearer ${this.authContext.state.token}`};
     return { url: context.url, init: { ...context.init, headers: headers } };
   }
   async post(context: ResponseContext): Promise<Response | void> {
@@ -24,7 +24,7 @@ export class AuthMiddleware implements Middleware {
           refreshToken_lock = undefined;
         }
         // retry the request
-        const headers = { ...context.init.headers, Authorization: `bearer ${this.authContext.state.token}` };
+        const headers = { ...context.init.headers, Authorization: `Bearer ${this.authContext.state.token}` };
         return await context.fetch(context.url, { ...context.init, headers: headers });
       } catch (exc) {
         if (this.authContext.state.token != null) this.authContext.setToken(null);
