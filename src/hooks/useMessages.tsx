@@ -60,10 +60,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
       const response = await messageApi.messageCreate_Post({
         destinationType,
         destination,
-        message: {
-          clientId: undefined as any,
-          content: newMessage,
-        },
+        message: { content: newMessage },
       });
       addMessages({ atEnd: true, messages: [response] });
     },

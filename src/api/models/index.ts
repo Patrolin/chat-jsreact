@@ -6,7 +6,6 @@
  */
 export * from './AttachmentDeleteRequestDto';
 export * from './AttachmentMetadataDto';
-export * from './AttachmentUploadRequestDto';
 export * from './ChannelDto';
 export * from './ErrorDto';
 export * from './InboundChatMessage';

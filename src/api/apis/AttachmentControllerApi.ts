@@ -6,14 +6,17 @@
  */
 import {AttachmentDeleteRequestDto} from '../models/AttachmentDeleteRequestDto';
 import {AttachmentMetadataDto} from '../models/AttachmentMetadataDto';
-import {AttachmentUploadRequestDto} from '../models/AttachmentUploadRequestDto';
 import * as runtime from '../runtime';
 
 export type attachmentGet_attachmentId_Get_PathParams = {
     attachmentId: string;
 };
 export type attachmentUpload_Post_QueryParams = {
-    requestDto: AttachmentUploadRequestDto;
+    clientId: string;
+    messageId: string;
+};
+export type attachmentUpload_Post_MultipartBody = {
+    attachment: Blob;
 };
 export class AttachmentControllerApi extends runtime.BaseAPI {
     async attachmentDelete_Post_Raw(body: AttachmentDeleteRequestDto, overrides: RequestInit = {}): Promise<Response> {
@@ -59,7 +62,7 @@ export class AttachmentControllerApi extends runtime.BaseAPI {
         const response = await this.attachmentGet_attachmentId_Get_Raw(path_params, overrides);
         return await new runtime.JSONApiResponse(response, v => v as Blob).value();
     }
-    async attachmentUpload_Post_Raw(query: attachmentUpload_Post_QueryParams, overrides: RequestInit = {}): Promise<Response> {
+    async attachmentUpload_Post_Raw(query: attachmentUpload_Post_QueryParams, body: attachmentUpload_Post_MultipartBody, overrides: RequestInit = {}): Promise<Response> {
         let path = '/api/attachment/upload';
         const headers: runtime.HTTPHeaders = {};
         if (this.configuration && this.configuration.accessToken) {
@@ -69,15 +72,18 @@ export class AttachmentControllerApi extends runtime.BaseAPI {
                 headers["Authorization"] = `Bearer ${tokenString}`;
             }
         }
+        const formData = new FormData();
+        formData.append('attachment', body.attachment);
         return await this.request({
             method: 'POST',
             path,
             headers,
+            body: formData,
             query,
         }, overrides);
     }
-    async attachmentUpload_Post(query: attachmentUpload_Post_QueryParams, overrides: RequestInit = {}): Promise<AttachmentMetadataDto> {
-        const response = await this.attachmentUpload_Post_Raw(query, overrides);
+    async attachmentUpload_Post(query: attachmentUpload_Post_QueryParams, body: attachmentUpload_Post_MultipartBody, overrides: RequestInit = {}): Promise<AttachmentMetadataDto> {
+        const response = await this.attachmentUpload_Post_Raw(query, body, overrides);
         return await new runtime.JSONApiResponse(response, v => v as AttachmentMetadataDto).value();
     }
 }

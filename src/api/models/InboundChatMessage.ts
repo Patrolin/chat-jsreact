@@ -5,6 +5,6 @@
  * Do NOT edit it manually
  */
 export type InboundChatMessage = {
-    clientId: string;
+    clientId?: string;
     content: string;
 };

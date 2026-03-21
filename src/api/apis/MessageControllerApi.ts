@@ -16,7 +16,7 @@ export type messageList_Get_QueryParams = {
     destinationType: 'CHANNEL' | 'USER' | 'SELF';
     destination: string;
     pageable: Pageable;
-    messageId: string;
+    messageId?: string;
 };
 export class MessageControllerApi extends runtime.BaseAPI {
     async messageCreate_Post_Raw(body: MessageCreateRequestDto, overrides: RequestInit = {}): Promise<Response> {
