@@ -28,7 +28,6 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
       const response = await messageApi.messageList_Get({
         destinationType,
         destination,
-        messageId: undefined as any,
         pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE, sort: undefined as any },
       });
       return response.messages;
