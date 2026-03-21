@@ -25,11 +25,9 @@ export const LoginPage: FC = () => {
       route("/client");
     }).catch((error: any) => {
       const response = error.response as Response;
-      if (response.status >= 400 && response.status < 500) {
-        changeState({ errorMessage: "Incorrect username or password. Please try again." });
-      } else {
-        changeState({ errorMessage: `Error ${response.status}.` });
-      }
+      const errorMessage =
+        response.status >= 400 && response.status < 500 ? "Incorrect username or password. Please try again." : `Error ${response.status}.`;
+      changeState({ errorMessage });
     });
     changeState({ submitting: false });
   };
@@ -78,7 +76,6 @@ export const LoginPage: FC = () => {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center"
               type="submit"
-              id="login-button"
             >
               <LoadingSpinner className="mr-2" loading={state.submitting} />
               <span>Login</span>
