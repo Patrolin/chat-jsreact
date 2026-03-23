@@ -6,7 +6,7 @@ import { getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
-import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel } from "@/hooks/useMessages";
+import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel, Message } from "@/hooks/useMessages";
 import { FC, useCallback, useRef } from "react";
 
 function isVisibleInSideView(label: string, search: string) {
@@ -147,27 +147,7 @@ export const ClientPage: FC = () => {
             {messagesLoading ? (
               <LoadingSpinner className="mx-auto mb-2 text-black" />
             ) : (
-              messages.map((message, i) => {
-                const isSelf = message.author === currentUser;
-                return (
-                  <div key={i} className={`flex mb-2 ${isSelf ? "self-end text-white" : "items-start text-black"}`}>
-                    <div className={`rounded-lg p-2 md:max-w-xl max-w-sm ${isSelf ? "bg-blue-500" : "bg-gray-200"}`}>
-                      <div className={`relative text-sm font-semibold flex ${isSelf ? "justify-end" : "justify-start"}`}>
-                        {/*TODO: context menu */}
-                        <div>
-                          <span>{isSelf ? "You" : message.author}</span>
-                          <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
-                            {message.timestamp.split("T")[0]}
-                          </span>
-                        </div>
-                        {isSelf && <Icon name="more_vert" className="text-base pl-2 font-normal cursor-pointer font-semibold" />}
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                      {/* TODO: attachments */}
-                    </div>
-                  </div>
-                );
-              })
+              messages.map((message, i) => <Message key={i} message={message} currentUser={currentUser} />)
             )}
           </div>
         </div>

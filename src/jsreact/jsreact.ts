@@ -333,7 +333,7 @@ type VirtNode = {
   hooks: Hook[] | string[];
   /** the key that the component was rendered as */
   key: string;
-  /** map<key, ChildState> - TODO: maybe use Map for performance? */
+  /** map<key, ChildState> - NOTE: maybe use Map for performance? */
   children: Record<string, VirtNode>;
   /** used to generate default keys for children */
   childrenIndex: number;
@@ -1176,7 +1176,7 @@ export function useId(_idProp_legacy: any): string {
   return `_${component.root.hookIndex++}`;
 }
 export function useDebugValue<T>(_value: T, _formatter?: (value: T) => any) {
-  // TODO: maybe store the debug value?
+  // NOTE: maybe store the debug value?
 }
 export function useReducer<S, A>(reducer: (state: S, action: A) => S, initialArg: S, init?: (initialArg: S) => S): [S, (action: A) => void] {
   const component = $component;
@@ -1197,7 +1197,7 @@ export function useReducer<S, A>(reducer: (state: S, action: A) => S, initialArg
   hook.reducer = reducer;
   return [hook.state, hook.dispatch];
 }
-/* TODO: more hooks? */
+/* NOTE: more hooks? */
 
 // obscure React stuff
 export function startTransition(callback: () => void) {
