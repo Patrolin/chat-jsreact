@@ -1,4 +1,4 @@
-// jsreact v1.1
+// jsreact v1.1.2
 import type React from "react";
 
 // utils
@@ -478,7 +478,10 @@ function createElementAndApplyDOMProps(component: VirtNode, desiredElementType: 
   if (style != null) {
     for (const [k, v] of Object.entries(style)) {
       /* NOTE: pass through `--${string}` and `-${string}` directly, else add "px" to non-unitless numbers. */
-      if (k.startsWith("-")) (element as HTMLElement).style.setProperty(k, v);
+      if (k.startsWith("-")) {
+        if (v != null) (element as HTMLElement).style.setProperty(k, v);
+        else (element as HTMLElement).style.removeProperty(k);
+      }
       else if (UNITLESS_CSS_PROPS.has(k)) (element as HTMLElement).style[k as any] = v;
       else (element as HTMLElement).style[k as any] = (typeof v === "number" ? `${v}px` : v);
     }
@@ -857,6 +860,7 @@ function unmountUnusedDescendants(parent: VirtNode, parentGcFlag: number, remove
         }}
       }
       const element = component.element;
+      let nextRemoveChildrenFromDOM = removeChildrenFromDOM;
       if (element != null) {
         // set ref = null
         const child = component.node;
@@ -866,14 +870,14 @@ function unmountUnusedDescendants(parent: VirtNode, parentGcFlag: number, remove
         if (removeChildrenFromDOM) {
           const $$typeof = (component.node as JsReactElement|null)?.$$typeof;
           if ($$typeof === TYPE_PORTAL) {
-            removeChildrenFromDOM = true;
+            nextRemoveChildrenFromDOM = true;
           } else {
             element.remove();
-            removeChildrenFromDOM = false;
+            nextRemoveChildrenFromDOM = false;
           }
         }
       }
-      unmountUnusedDescendants(component, parentGcFlag, removeChildrenFromDOM);
+      unmountUnusedDescendants(component, parentGcFlag, nextRemoveChildrenFromDOM);
     }
   }
 }
@@ -1193,4 +1197,9 @@ export function useReducer<S, A>(reducer: (state: S, action: A) => S, initialArg
   hook.reducer = reducer;
   return [hook.state, hook.dispatch];
 }
-// TODO: more hooks?
+/* TODO: more hooks? */
+
+// obscure React stuff
+export function startTransition(callback: () => void) {
+  callback();
+}
