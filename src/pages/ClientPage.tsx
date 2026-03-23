@@ -1,5 +1,6 @@
 import { ChannelControllerApi, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SideViewItem } from "@/components/SideViewItem";
 import { getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
@@ -143,27 +144,31 @@ export const ClientPage: FC = () => {
         </div>
         <div className="flex-1 flex flex-col-reverse overflow-y-auto px-4 py-2 w-full" onScroll={messagesOnScroll}>
           <div className="flex flex-col">
-            {messages.map((message, i) => {
-              const isSelf = message.author === currentUser;
-              return (
-                <div key={i} className={`flex mb-2 ${isSelf ? "self-end text-white" : "items-start text-black"}`}>
-                  <div className={`rounded-lg p-2 md:max-w-xl max-w-sm ${isSelf ? "bg-blue-500" : "bg-gray-200"}`}>
-                    <div className={`relative text-sm font-semibold flex ${isSelf ? "justify-end" : "justify-start"}`}>
-                      {/*TODO: context menu */}
-                      <div>
-                        <span>{isSelf ? "You" : message.author}</span>
-                        <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
-                          {message.timestamp.split("T")[0]}
-                        </span>
+            {messagesLoading ? (
+              <LoadingSpinner className="mx-auto mb-2 text-black" />
+            ) : (
+              messages.map((message, i) => {
+                const isSelf = message.author === currentUser;
+                return (
+                  <div key={i} className={`flex mb-2 ${isSelf ? "self-end text-white" : "items-start text-black"}`}>
+                    <div className={`rounded-lg p-2 md:max-w-xl max-w-sm ${isSelf ? "bg-blue-500" : "bg-gray-200"}`}>
+                      <div className={`relative text-sm font-semibold flex ${isSelf ? "justify-end" : "justify-start"}`}>
+                        {/*TODO: context menu */}
+                        <div>
+                          <span>{isSelf ? "You" : message.author}</span>
+                          <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
+                            {message.timestamp.split("T")[0]}
+                          </span>
+                        </div>
+                        {isSelf && <Icon name="more_vert" className="text-base pl-2 font-normal cursor-pointer font-semibold" />}
                       </div>
-                      {isSelf && <Icon name="more_vert" className="text-base pl-2 font-normal cursor-pointer font-semibold" />}
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      {/* TODO: attachments */}
                     </div>
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                    {/* TODO: attachments */}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
         <form
@@ -177,7 +182,7 @@ export const ClientPage: FC = () => {
           <div className="flex mt-2">
             <input className="hidden" type="file" multiple />
             <button className="border border-r-0 border-gray-300 hover:bg-gray-100 rounded-l-lg px-2 flex items-center focus:outline-none">
-              <Icon className="text-4xl" name="attach_file" />
+              <Icon name="attach_file" />
             </button>
             <textarea
               ref={inputRef}
@@ -196,10 +201,10 @@ export const ClientPage: FC = () => {
               }}
             />
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white px-2 flex items-center rounded-r-lg focus:outline-none"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 flex items-center rounded-r-lg focus:outline-none"
               type="submit"
             >
-              <Icon className="text-4xl" name="send" />
+              <Icon name="send" />
             </button>
           </div>
         </form>

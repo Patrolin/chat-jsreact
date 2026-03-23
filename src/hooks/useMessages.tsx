@@ -65,6 +65,8 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [addMessages]
   );
+  
+  // TODO: context menu (api/message/delete, api/message/edit)
 
   // onScroll
   const [state, changeState] = useChangeState({

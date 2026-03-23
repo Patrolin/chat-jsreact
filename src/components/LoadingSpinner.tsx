@@ -1,14 +1,17 @@
 import { DOMProps } from "@/jsreact";
+import { HTMLAttributes } from "react";
 
 type Props = {
   loading?: boolean;
-} & Omit<DOMProps, "key">;
+  size?: string;
+} & Omit<DOMProps, "key"> &
+  HTMLAttributes<HTMLDivElement>;
 export const LoadingSpinner: React.FC<Props> = (props) => {
-  const { loading = true, className, ...rest } = props;
+  const { loading = true, size = "size-6", className = "text-white", ...rest } = props;
   return (
     loading && (
-      <div className={`flex items-center ${className}`} {...rest}>
-        <svg className="size-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <div className={`flex items-center overflow-hidden ${className}`} {...rest}>
+        <svg className={`${size} animate-spin`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path
             className="opacity-75"
