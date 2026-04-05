@@ -1,7 +1,7 @@
 import { ChannelControllerApi, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Message } from "@/components/Message";
+import { Message, NewAttachment } from "@/components/Message";
 import { SideViewItem } from "@/components/SideViewItem";
 import { getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
@@ -36,6 +36,7 @@ export const ClientPage: FC = () => {
     search: "",
     selectedChannel: { type: ChannelType.User, username: currentUser } as MessagesChannel,
     newMessage: "",
+    newFiles: [] as File[],
   });
   const sideView: React.ReactNode = (() => {
     if (state.selectedView === ChannelType.User) {
@@ -96,11 +97,28 @@ export const ClientPage: FC = () => {
     }
   })();
   const { messagesLoading, messages, submitMessage, messagesOnScroll } = useMessages(authContext, state.selectedChannel);
-  console.log("ayaya.ClientPage", state, messages);
+  console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
     { value: ChannelType.User, label: "Users" },
   ];
+  const addFiles = useCallback(
+    (newFiles: File[]) => {
+      changeState({
+        newFiles: [...state.newFiles, ...newFiles],
+      });
+    },
+    [state]
+  );
+  const removeFile = useCallback(
+    (index: number) => {
+      const newFiles = [...state.newFiles];
+      newFiles.splice(index, 1);
+      changeState({ newFiles });
+    },
+    [state]
+  );
+  const getFileInput = () => document.querySelector<HTMLInputElement>("input[type='file']");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const onSubmit = useCallback(() => {
     const inputElement = inputRef.current;
@@ -159,10 +177,34 @@ export const ClientPage: FC = () => {
             onSubmit();
           }}
         >
-          <div className="flex mt-1 overflow-y-auto" />
+          <div className="flex mt-1 overflow-y-auto">
+            {state.newFiles.map((newFile, i) => (
+              <NewAttachment key={i} attachment={{ filename: newFile.name, size: newFile.size }} onRemove={() => removeFile(i)} />
+            ))}
+          </div>
           <div className="flex mt-2">
-            <input className="hidden" type="file" multiple />
-            <button className="border border-r-0 border-gray-300 hover:bg-gray-100 rounded-l-lg px-2 flex items-center focus:outline-none">
+            <input
+              className="hidden"
+              /* NOTE: recreate the file input each time, so that the user can add back files after removing them! */
+              key={state.newFiles.length}
+              type="file"
+              multiple
+              onInput={(event) => {
+                const newFiles = [...(event.target as any).files] as File[];
+                addFiles(newFiles);
+              }}
+              {...{
+                onCancel: () => {
+                  // user selected the same files again
+                },
+              }}
+            />
+            <button
+              className="border border-r-0 border-gray-300 hover:bg-gray-100 rounded-l-lg px-2 flex items-center focus:outline-none"
+              onClick={() => {
+                getFileInput()?.click();
+              }}
+            >
               <Icon name="attach_file" />
             </button>
             <textarea

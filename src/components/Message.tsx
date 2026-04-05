@@ -47,6 +47,26 @@ export const Message: FC<MessageProps> = (props) => {
   );
 };
 
+type NewAttachmentProps = {
+  attachment: { filename: string; size: number };
+  onRemove: () => void;
+};
+export const NewAttachment: React.FC<NewAttachmentProps> = (props) => {
+  const { attachment, onRemove } = props;
+  return (
+    <div className="input-attachment-component flex items-center mr-2 p-1 text-xs bg-gray-200 rounded-lg">
+      <Icon name="insert_drive_file" className="text-blue-500 mr-2 text-2xl" />
+      <div className="flex flex-col min-w-48">
+        <span className="text-gray-800">{attachment.filename}</span>
+        <span className="text-gray-500">{formatSize(attachment.size)}</span>
+      </div>
+      <button className="p-1 mr-0.5 rounded-full hover:bg-gray-200 flex items-center" onClick={onRemove}>
+        <Icon name="cancel" className="text-red-500 text-lg" />
+      </button>
+    </div>
+  );
+};
+
 type MessageAttachmentProps = {
   attachment: AttachmentMetadataDto;
 };
@@ -65,9 +85,12 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
           </div>
         </div>
         <div className="flex items-center">
-          <button className="p-1 mr-0.5 rounded-full hover:bg-gray-200 flex items-center" onClick={() => {
-            // TODO: handle delete attachment
-          }}>
+          <button
+            className="p-1 mr-0.5 rounded-full hover:bg-gray-200 flex items-center"
+            onClick={() => {
+              // TODO: handle delete attachment
+            }}
+          >
             <Icon name="delete" className="text-gray-800 text-lg" />
           </button>
           <a
