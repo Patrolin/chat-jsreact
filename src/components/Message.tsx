@@ -9,9 +9,10 @@ import { downloadUrl, formatSize } from "@/utils";
 type MessageProps = {
   message: OutboundChatMessage;
   currentUser: string;
+  onDeleteAttachment: (attachment: AttachmentMetadataDto) => void;
 };
 export const Message: FC<MessageProps> = (props) => {
-  const { message, currentUser } = props;
+  const { message, currentUser, onDeleteAttachment } = props;
   const isSelf = message.author === currentUser;
   const [isSelected, setIsSelected] = useState(false);
   const onClickContextMenu = useClickAway((_event, inside) => setIsSelected(inside));
@@ -40,7 +41,7 @@ export const Message: FC<MessageProps> = (props) => {
         </div>
         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
         {message.attachments.map((attachment, i) => (
-          <MessageAttachment key={i} attachment={attachment} />
+          <MessageAttachment key={i} attachment={attachment} onDeleteAttachment={onDeleteAttachment} />
         ))}
       </div>
     </div>
@@ -69,9 +70,10 @@ export const NewAttachment: React.FC<NewAttachmentProps> = (props) => {
 
 type MessageAttachmentProps = {
   attachment: AttachmentMetadataDto;
+  onDeleteAttachment: (attachment: AttachmentMetadataDto) => void;
 };
 const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
-  const { attachment } = props;
+  const { attachment, onDeleteAttachment } = props;
   const authContext = useAuthContext();
   const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
   return (
@@ -85,12 +87,7 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
           </div>
         </div>
         <div className="flex items-center">
-          <button
-            className="p-1 mr-0.5 rounded-full hover:bg-gray-200 flex items-center"
-            onClick={() => {
-              // TODO: handle delete attachment
-            }}
-          >
+          <button className="p-1 mr-0.5 rounded-full hover:bg-gray-200 flex items-center" onClick={() => onDeleteAttachment(attachment)}>
             <Icon name="delete" className="text-gray-800 text-lg" />
           </button>
           <a

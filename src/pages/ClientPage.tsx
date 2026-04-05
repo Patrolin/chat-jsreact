@@ -96,7 +96,7 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
-  const { messagesLoading, messages, submitMessage, messagesOnScroll } = useMessages(authContext, state.selectedChannel);
+  const { messagesLoading, messages, submitMessage, messagesOnScroll, deleteAttachment } = useMessages(authContext, state.selectedChannel);
   console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
@@ -166,7 +166,16 @@ export const ClientPage: FC = () => {
             {messagesLoading ? (
               <LoadingSpinner className="mx-auto mb-2 text-black" />
             ) : (
-              messages.map((message, i) => <Message key={i} message={message} currentUser={currentUser} />)
+              messages.map((message, i) => (
+                <Message
+                  key={i}
+                  message={message}
+                  currentUser={currentUser}
+                  onDeleteAttachment={(attachment) => {
+                    deleteAttachment(message, attachment);
+                  }}
+                />
+              ))
             )}
           </div>
         </div>

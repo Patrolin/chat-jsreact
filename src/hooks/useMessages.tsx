@@ -68,6 +68,16 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [messages, forceRerender]
   );
+  const deleteAttachment = useCallback(
+    async (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
+      await attachmentApi.attachmentDelete_Post({ attachmentId: attachment.id });
+      const i = message.attachments.findIndex((v) => v.id === attachment.id);
+      message.attachments.splice(i, 1);
+      forceRerender();
+    },
+    [forceRerender]
+  );
+
   const submitMessage = useCallback(
     async (newMessage: string, newFiles: File[]) => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
@@ -121,5 +131,5 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [state, addMessages]
   );
-  return { messagesLoading, messages, submitMessage, messagesOnScroll };
+  return { messagesLoading, messages, submitMessage, messagesOnScroll, deleteAttachment };
 }
