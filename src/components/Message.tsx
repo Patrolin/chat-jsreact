@@ -114,6 +114,7 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
             href={`${API_LOCATION}/attachment/get/${attachment.id}`}
             download={attachment.filename}
             onClick={async (event) => {
+              // TODO: use a vite proxy instead, so that the browser can show the download progress
               // NOTE: `<a download>` only works for same-domain links, so we have to do this:
               event.preventDefault();
               const response = await attachmentApi.attachmentGet_attachmentId_Get_Raw({ attachmentId: attachment.id });
