@@ -21,7 +21,7 @@ function getChannelDestination(selectedChannel: MessagesChannel) {
 }
 
 export function useMessages(authContext: AuthContext, selectedChannel: MessagesChannel) {
-  // TODO: reducer and keep all channels?
+  // TODO: use reducer and keep history of all channels?
   // get messages
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
   const [messagesLoading, defaultMessages] = useGetRequest({

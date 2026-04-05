@@ -22,7 +22,7 @@ export const Message: FC<MessageProps> = (props) => {
           {isSelected && (
             <div className="message-context-menu absolute right-5 bottom-0 w-48 bg-white rounded-md shadow-lg z-20">
               <ul className="py-1">
-                {/* TODO: handle edit, delete message */}
+                {/* TODO: handle edit/delete message */}
                 <p className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer">Edit message</p>
                 <p className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer">Delete message</p>
               </ul>
