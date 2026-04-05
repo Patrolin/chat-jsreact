@@ -1,12 +1,13 @@
 import { ChannelControllerApi, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Message } from "@/components/Message";
 import { SideViewItem } from "@/components/SideViewItem";
 import { getAuthConfigWithBearer } from "@/config";
 import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
-import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel, Message } from "@/hooks/useMessages";
+import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel } from "@/hooks/useMessages";
 import { FC, useCallback, useRef } from "react";
 
 function isVisibleInSideView(label: string, search: string) {
