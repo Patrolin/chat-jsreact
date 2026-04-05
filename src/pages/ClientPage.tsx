@@ -123,9 +123,9 @@ export const ClientPage: FC = () => {
   const onSubmit = useCallback(() => {
     const inputElement = inputRef.current;
     if (inputElement && state.newMessage) {
-      submitMessage(state.newMessage);
+      submitMessage(state.newMessage, state.newFiles);
       inputElement.value = "";
-      changeState({ newMessage: "" });
+      changeState({ newMessage: "", newFiles: [] });
     }
   }, [state, submitMessage]);
   return (

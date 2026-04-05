@@ -12,7 +12,7 @@ export type attachmentGet_attachmentId_Get_PathParams = {
     attachmentId: string;
 };
 export type attachmentUpload_Post_MultipartBody = {
-    clientId: string;
+    clientId?: string;
     messageId: string;
     attachment: Blob;
 };
@@ -73,7 +73,7 @@ export class AttachmentControllerApi extends runtime.BaseAPI {
         const formData = new FormData();
         formData.append('attachment', body.attachment);
         formData.append("messageId", body.messageId);
-        formData.append("clientId", body.clientId);
+        formData.append("clientId", body.clientId ?? "");
         return await this.request({
             method: 'POST',
             path,

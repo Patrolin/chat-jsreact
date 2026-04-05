@@ -1,4 +1,4 @@
-import { MessageControllerApi, OutboundChatMessage } from "@/api";
+import { AttachmentControllerApi, AttachmentMetadataDto, MessageControllerApi, OutboundChatMessage } from "@/api";
 import { CHAT_DEFAULT_PAGE_SIZE, CHAT_FETCH_SCROLL_DISTANCE_PX, getAuthConfigWithBearer } from "@/config";
 import { AuthContext } from "./useAuth";
 import { useGetRequest } from "./useGetRequest";
@@ -24,6 +24,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
   // TODO: use reducer and keep history of all channels?
   // get messages
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
+  const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
   const [messagesLoading, defaultMessages] = useGetRequest({
     defaultValue: [],
     fetch: async (signal) => {
@@ -59,15 +60,31 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [messages, forceRerender]
   );
+  const addAttachment = useCallback(
+    (messageId: string, newAttachment: AttachmentMetadataDto) => {
+      const message = messages.find((message) => message.id === messageId);
+      message?.attachments.push(newAttachment);
+      forceRerender();
+    },
+    [messages, forceRerender]
+  );
   const submitMessage = useCallback(
-    async (newMessage: string) => {
+    async (newMessage: string, newFiles: File[]) => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
-      const response = await messageApi.messageCreate_Post({
+      const messageResponse = await messageApi.messageCreate_Post({
         destinationType,
         destination,
         message: { content: newMessage },
       });
-      addMessages({ atEnd: true, messages: [response] });
+      addMessages({ atEnd: true, messages: [messageResponse] });
+      const messageId = messageResponse.id;
+      for (const newFile of newFiles) {
+        const attachmentResponse = await attachmentApi.attachmentUpload_Post({
+          messageId,
+          attachment: newFile,
+        });
+        addAttachment(messageId, attachmentResponse);
+      }
     },
     [addMessages]
   );
