@@ -5,6 +5,7 @@ import { Icon } from "./Icon";
 import { API_LOCATION, getAuthConfigWithBearer } from "@/config";
 import { useAuthContext } from "@/hooks/useAuth";
 import { downloadUrl, formatSize } from "@/utils";
+import { useGetRequest } from "@/hooks/useGetRequest";
 
 type MessageProps = {
   message: OutboundChatMessage;
@@ -46,6 +47,24 @@ export const Message: FC<MessageProps> = (props) => {
       </div>
     </div>
   );
+};
+
+type AttachmentImageProps = { attachment: AttachmentMetadataDto };
+export const AttachmentImage: React.FC<AttachmentImageProps> = (props) => {
+  const { attachment } = props;
+  const authContext = useAuthContext();
+  const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
+  const [imageLoading, imageUrl] = useGetRequest({
+    fetch: async () => {
+      const response = await attachmentApi.attachmentGet_attachmentId_Get_Raw({ attachmentId: attachment.id });
+      const url = URL.createObjectURL(await response.blob());
+      return url;
+    },
+    cacheId: `attachment-${attachment.id}`,
+    disabled: attachment.id == null,
+  });
+  if (imageLoading) return undefined;
+  return <img className="rounded-lg mt-0.5" alt={attachment.filename} src={imageUrl} />;
 };
 
 type NewAttachmentProps = {
@@ -106,13 +125,7 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
           </a>
         </div>
       </div>
-      {attachment.contentType.startsWith("image/") && (
-        <img
-          className="rounded-lg mt-0.5"
-          alt="repository-open-graph-template.png"
-          src={`${API_LOCATION}/attachment/get/${attachment.id}`}
-        />
-      )}
+      {attachment.contentType.startsWith("image/") && <AttachmentImage attachment={attachment} />}
     </div>
   );
 };
