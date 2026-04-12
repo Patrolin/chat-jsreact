@@ -1,11 +1,9 @@
-import { AttachmentControllerApi, AttachmentMetadataDto, OutboundChatMessage } from "@/api";
+import { AttachmentMetadataDto, OutboundChatMessage } from "@/api";
 import { useClickAway } from "@/hooks/useClickAway";
 import { FC, useState } from "react";
 import { Icon } from "./Icon";
-import { API_LOCATION, getAuthConfigWithBearer } from "@/config";
-import { useAuthContext } from "@/hooks/useAuth";
-import { downloadUrl, formatSize } from "@/utils";
-import { useGetRequest } from "@/hooks/useGetRequest";
+import { API_LOCATION } from "@/config";
+import { formatSize } from "@/utils";
 
 type MessageProps = {
   message: OutboundChatMessage;
@@ -52,19 +50,16 @@ export const Message: FC<MessageProps> = (props) => {
 type AttachmentImageProps = { attachment: AttachmentMetadataDto };
 export const AttachmentImage: React.FC<AttachmentImageProps> = (props) => {
   const { attachment } = props;
-  const authContext = useAuthContext();
-  const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
-  const [imageLoading, imageUrl] = useGetRequest({
-    fetch: async () => {
-      const response = await attachmentApi.attachmentGet_attachmentId_Get_Raw({ attachmentId: attachment.id });
-      const url = URL.createObjectURL(await response.blob());
-      return url;
-    },
-    cacheId: `attachment-${attachment.id}`,
-    disabled: attachment.id == null,
-  });
-  if (imageLoading) return undefined;
-  return <img className="rounded-lg mt-0.5" alt={attachment.filename} src={imageUrl} />;
+  const [imageLoading, setImageLoading] = useState(true);
+  return (
+    <img
+      className="rounded-lg mt-0.5"
+      alt={attachment.filename}
+      src={`${API_LOCATION}/attachment/get/${attachment.id}`}
+      onLoad={() => setImageLoading(false)}
+    />
+    /* TODO: show spinner while image is loading? */
+  );
 };
 
 type NewAttachmentProps = {
@@ -93,8 +88,6 @@ type MessageAttachmentProps = {
 };
 const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
   const { attachment, onDeleteAttachment } = props;
-  const authContext = useAuthContext();
-  const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
   return (
     <div className="message-attachment-component mt-2 bg-white p-2 rounded-lg shadow-lg text-xs flex flex-col">
       <div className="flex items-center justify-between w-full">
@@ -113,14 +106,6 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
             className="p-1 rounded-full hover:bg-gray-200 flex items-center"
             href={`${API_LOCATION}/attachment/get/${attachment.id}`}
             download={attachment.filename}
-            onClick={async (event) => {
-              // TODO: use a vite proxy instead, so that the browser can show the download progress
-              // NOTE: `<a download>` only works for same-domain links, so we have to do this:
-              event.preventDefault();
-              const response = await attachmentApi.attachmentGet_attachmentId_Get_Raw({ attachmentId: attachment.id });
-              const url = URL.createObjectURL(await response.blob());
-              downloadUrl(url, attachment.filename);
-            }}
           >
             <Icon name="download" className="text-gray-800 text-lg" />
           </a>

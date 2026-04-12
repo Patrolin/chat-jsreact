@@ -34,6 +34,12 @@ const RawAuthContext = createContext(null as AuthContext | null);
 export const AuthContextProvider: FC<PropsWithChildren> = (props) => {
   const [state, setToken] = useReducer(
     (state: AuthState, newToken: string | null) => {
+      cookieStore.set({
+        name: "offrecord-token",
+        value: newToken ?? "",
+        path: "/",
+        sameSite: "strict",
+      });
       if (newToken != null) localStorage.setItem(AUTH_STORAGE_ID, JSON.stringify(newToken));
       else localStorage.removeItem(AUTH_STORAGE_ID);
       Object.assign(state, { token: newToken, parsed: parseToken(newToken) });
