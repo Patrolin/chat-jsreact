@@ -1,11 +1,7 @@
 import { AttachmentControllerApi, AttachmentMetadataDto, MessageControllerApi, OutboundChatMessage } from "@/api";
 import { CHAT_DEFAULT_PAGE_SIZE, CHAT_FETCH_SCROLL_DISTANCE_PX, getAuthConfigWithBearer } from "@/config";
 import { AuthContext } from "./useAuth";
-import { useGetRequest } from "./useGetRequest";
-import { FC, useCallback, useMemo, useReducer, useState } from "react";
-import { useChangeState } from "./useChangeState";
-import { Icon } from "@/components/Icon";
-import { useClickAway } from "./useClickAway";
+import { useCallback, useEffect, useReducer } from "react";
 
 export enum ChannelType {
   User = "USER",
@@ -21,92 +17,134 @@ function getChannelDestination(selectedChannel: MessagesChannel) {
 }
 
 export function useMessages(authContext: AuthContext, selectedChannel: MessagesChannel) {
-  // TODO: use reducer and keep history of all channels?
-  // get messages
+  const selectedChannelId = selectedChannel.type === ChannelType.User ? selectedChannel.username : String(selectedChannel.id);
+  type MessagesUpdate =
+    | { type: "isFetching"; channelId: string }
+    | { type: "addMessages"; channelId: string; messages: OutboundChatMessage[]; isFetching?: boolean; haveAllMessages?: boolean }
+    | { type: "deleteMessage"; channelId: string; message: OutboundChatMessage }
+    | { type: "addAttachment"; channelId: string; message: OutboundChatMessage; attachment: AttachmentMetadataDto }
+    | { type: "deleteAttachment"; channelId: string; message: OutboundChatMessage; attachment: AttachmentMetadataDto };
+  type ChannelState = {
+    messages: OutboundChatMessage[];
+    isFetching: boolean;
+    haveAllMessages: boolean;
+  };
+  const [channelStates, updateChannel] = useReducer(
+    (prev, update: MessagesUpdate) => {
+      const channelState = prev[update.channelId];
+      switch (update.type) {
+        case "isFetching":
+          {
+            channelState.isFetching = true;
+          }
+          break;
+        case "addMessages":
+          {
+            const newMessages = [...channelState.messages, ...update.messages];
+            newMessages.sort((a, b) => +a.timestamp - +b.timestamp);
+            channelState.messages = newMessages;
+            channelState.isFetching = update.isFetching ?? channelState.isFetching;
+            channelState.haveAllMessages = update.haveAllMessages ?? channelState.haveAllMessages;
+          }
+          break;
+        case "deleteMessage":
+          {
+            channelState.messages = channelState.messages.filter((v) => v.id !== update.message.id);
+          }
+          break;
+        case "addAttachment":
+          {
+            update.message.attachments.push(update.attachment);
+          }
+          break;
+        case "deleteAttachment":
+          {
+            update.message.attachments.filter((v) => v.id !== update.attachment.id);
+          }
+          break;
+      }
+      return prev;
+    },
+    {} as Record<string, ChannelState>
+  );
+
+  // set default value
+  if (!(selectedChannelId in channelStates)) {
+    channelStates[selectedChannelId] = {
+      messages: [],
+      isFetching: false,
+      haveAllMessages: false,
+    };
+  }
+
+  // load initial messages
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
   const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
-  const [messagesLoading, defaultMessages] = useGetRequest({
-    defaultValue: [],
-    fetch: async (signal) => {
+  useEffect(() => {
+    const asyncCallback = async () => {
+      const channelState = channelStates[selectedChannelId];
+      if (channelState.messages.length > 0 || channelState.haveAllMessages) return;
+      updateChannel({ type: "isFetching", channelId: selectedChannelId });
       const { destinationType, destination } = getChannelDestination(selectedChannel);
-      const response = await messageApi.messageList_Get(
-        {
-          destinationType,
-          destination,
-          pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE, sort: undefined as any },
-        },
-        { signal }
-      );
-      return response.messages;
-    },
-    refetchOn: [JSON.stringify(selectedChannel)],
-  });
-  const messages = useMemo(() => (messagesLoading ? [] : [...defaultMessages]), [messagesLoading, defaultMessages]);
+      const { messages } = await messageApi.messageList_Get({
+        destinationType,
+        destination,
+        pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE, sort: undefined as any },
+      });
+      updateChannel({
+        type: "addMessages",
+        channelId: selectedChannelId,
+        messages,
+        isFetching: false,
+        haveAllMessages: messages.length < CHAT_DEFAULT_PAGE_SIZE,
+      });
+    };
+    asyncCallback();
+  }, [JSON.stringify(selectedChannel)]);
 
   // callbacks
-  type NewMessages = {
-    atEnd: boolean;
-    messages: OutboundChatMessage[];
-  };
-  const [_, forceRerender] = useReducer((v) => v, undefined);
-  const addMessages = useCallback(
-    (newMessages: NewMessages) => {
-      if (newMessages.atEnd) {
-        messages.splice(messages.length, 0, ...newMessages.messages);
-      } else {
-        messages.splice(0, 0, ...newMessages.messages);
-      }
-      forceRerender();
-    },
-    [messages, forceRerender]
-  );
-  const addAttachment = useCallback(
-    (messageId: string, newAttachment: AttachmentMetadataDto) => {
-      const message = messages.find((message) => message.id === messageId);
-      message?.attachments.push(newAttachment);
-      forceRerender();
-    },
-    [messages, forceRerender]
-  );
-  const deleteAttachment = useCallback(
-    async (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
-      await attachmentApi.attachmentDelete_Post({ attachmentId: attachment.id });
-      const i = message.attachments.findIndex((v) => v.id === attachment.id);
-      message.attachments.splice(i, 1);
-      forceRerender();
-    },
-    [forceRerender]
-  );
-
   const submitMessage = useCallback(
     async (newMessage: string, newFiles: File[]) => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
-      const messageResponse = await messageApi.messageCreate_Post({
+      const message = await messageApi.messageCreate_Post({
         destinationType,
         destination,
         message: { content: newMessage },
       });
-      addMessages({ atEnd: true, messages: [messageResponse] });
-      const messageId = messageResponse.id;
+      updateChannel({ type: "addMessages", channelId: selectedChannelId, messages: [message] });
+      const messageId = message.id;
       for (const newFile of newFiles) {
-        const attachmentResponse = await attachmentApi.attachmentUpload_Post({
+        const attachment = await attachmentApi.attachmentUpload_Post({
           messageId,
           attachment: newFile,
         });
-        addAttachment(messageId, attachmentResponse);
+        updateChannel({ type: "addAttachment", channelId: selectedChannelId, message, attachment });
       }
     },
-    [addMessages]
+    [updateChannel]
+  );
+  const deleteMessage = useCallback(
+    async (message: OutboundChatMessage) => {
+      await messageApi.messageDelete_Post({ messageId: message.id });
+      updateChannel({ type: "deleteMessage", channelId: selectedChannelId, message });
+    },
+    [updateChannel]
+  );
+  const _addAttachment = useCallback(
+    (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
+      updateChannel({ type: "addAttachment", channelId: selectedChannelId, message, attachment });
+    },
+    [updateChannel]
+  );
+  const deleteAttachment = useCallback(
+    async (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
+      await attachmentApi.attachmentDelete_Post({ attachmentId: attachment.id });
+      updateChannel({ type: "deleteAttachment", channelId: selectedChannelId, message, attachment });
+    },
+    [updateChannel]
   );
 
   // onScroll
-  const [state, changeState] = useChangeState({
-    isFetchingMoreMessages: false,
-    haveAllMessages: false,
-  });
-  if (defaultMessages.length < CHAT_DEFAULT_PAGE_SIZE) {
-    changeState({ haveAllMessages: true }, false);
-  }
   const messagesOnScroll = useCallback(
     async (event: React.WheelEvent<HTMLDivElement>) => {
       const element = event.target as HTMLDivElement;
@@ -114,22 +152,31 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
       const scrollHeight = element.scrollHeight - element.clientHeight - 1;
       const scrollFromTop = scrollHeight - scrollY;
       if (scrollFromTop < CHAT_FETCH_SCROLL_DISTANCE_PX) {
-        if (state.isFetchingMoreMessages || state.haveAllMessages) return;
-        changeState({ isFetchingMoreMessages: true }, false);
+        const channelState = channelStates[selectedChannelId];
+        if (channelState.isFetching || channelState.haveAllMessages) return;
+        updateChannel({ type: "isFetching", channelId: selectedChannelId });
         const { destinationType, destination } = getChannelDestination(selectedChannel);
-        // TODO: abort the request if necessary
+        const oldMessages = channelStates[destination].messages;
+        if (oldMessages.length === 0) return;
+        const oldestMessage = oldMessages[0];
         const response = await messageApi.messageList_Get({
           destinationType,
           destination,
-          messageId: messages[0].id,
+          messageId: oldestMessage.id,
           pageable: { page: 0, size: CHAT_DEFAULT_PAGE_SIZE, sort: undefined as any },
         });
         const newMessages = response.messages;
-        changeState({ isFetchingMoreMessages: false, haveAllMessages: newMessages.length < CHAT_DEFAULT_PAGE_SIZE }, false);
-        addMessages({ atEnd: false, messages: newMessages });
+        updateChannel({
+          type: "addMessages",
+          channelId: selectedChannelId,
+          messages: response.messages,
+          isFetching: false,
+          haveAllMessages: newMessages.length < CHAT_DEFAULT_PAGE_SIZE,
+        });
       }
     },
-    [state, addMessages]
+    [channelStates, updateChannel]
   );
-  return { messagesLoading, messages, submitMessage, messagesOnScroll, deleteAttachment };
+  const { isFetching, messages } = channelStates[selectedChannelId];
+  return { messagesLoading: isFetching, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment };
 }

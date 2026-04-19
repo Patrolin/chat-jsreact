@@ -4,14 +4,17 @@ import { FC, useState } from "react";
 import { Icon } from "./Icon";
 import { API_LOCATION } from "@/config";
 import { formatSize } from "@/utils";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 type MessageProps = {
   message: OutboundChatMessage;
   currentUser: string;
+  startEditingMessage: (message: OutboundChatMessage) => void;
+  onDeleteMessage: (message: OutboundChatMessage) => void;
   onDeleteAttachment: (attachment: AttachmentMetadataDto) => void;
 };
 export const Message: FC<MessageProps> = (props) => {
-  const { message, currentUser, onDeleteAttachment } = props;
+  const { message, currentUser, startEditingMessage, onDeleteMessage, onDeleteAttachment } = props;
   const isSelf = message.author === currentUser;
   const [isSelected, setIsSelected] = useState(false);
   const onClickContextMenu = useClickAway((_event, inside) => setIsSelected(inside));
@@ -22,9 +25,18 @@ export const Message: FC<MessageProps> = (props) => {
           {isSelected && (
             <div className="message-context-menu absolute right-5 bottom-0 w-48 bg-white rounded-md shadow-lg z-20">
               <ul className="py-1">
-                {/* TODO: handle edit/delete message */}
-                <p className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer">Edit message</p>
-                <p className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer">Delete message</p>
+                <p
+                  className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => startEditingMessage(message)}
+                >
+                  Edit message
+                </p>
+                <p
+                  className="block text-sm px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => onDeleteMessage(message)}
+                >
+                  Delete message
+                </p>
               </ul>
             </div>
           )}
@@ -52,13 +64,17 @@ export const AttachmentImage: React.FC<AttachmentImageProps> = (props) => {
   const { attachment } = props;
   const [imageLoading, setImageLoading] = useState(true);
   return (
-    <img
-      className="rounded-lg mt-0.5"
-      alt={attachment.filename}
-      src={`${API_LOCATION}/attachment/get/${attachment.id}`}
-      onLoad={() => setImageLoading(false)}
-    />
-    /* TODO: show spinner while image is loading? */
+    <div style={{ position: "relative" }}>
+      <img
+        className="rounded-lg mt-0.5"
+        alt={attachment.filename}
+        src={`${API_LOCATION}/attachment/get/${attachment.id}`}
+        onLoad={() => setImageLoading(false)}
+      />
+      {imageLoading && (
+        <LoadingSpinner style={{ position: "absolute", top: "50%", left: "50%", color: "black", transform: "translate(-50%, -50%)" }} />
+      )}
+    </div>
   );
 };
 

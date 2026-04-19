@@ -1,4 +1,4 @@
-import { ChannelControllerApi, UserControllerApi } from "@/api";
+import { ChannelControllerApi, OutboundChatMessage, UserControllerApi } from "@/api";
 import { Icon } from "@/components/Icon";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Message, NewAttachment } from "@/components/Message";
@@ -37,6 +37,7 @@ export const ClientPage: FC = () => {
     selectedChannel: { type: ChannelType.User, username: currentUser } as MessagesChannel,
     newMessage: "",
     newFiles: [] as File[],
+    messageToEdit: null as OutboundChatMessage | null,
   });
   const sideView: React.ReactNode = (() => {
     if (state.selectedView === ChannelType.User) {
@@ -96,7 +97,10 @@ export const ClientPage: FC = () => {
       return `Chatting in ${state.selectedChannel.name}`;
     }
   })();
-  const { messagesLoading, messages, submitMessage, messagesOnScroll, deleteAttachment } = useMessages(authContext, state.selectedChannel);
+  const { messagesLoading, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment } = useMessages(
+    authContext,
+    state.selectedChannel
+  );
   console.log("ayaya.ClientPage", state);
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
     { value: ChannelType.Public, label: "Channels" },
@@ -128,6 +132,7 @@ export const ClientPage: FC = () => {
       changeState({ newMessage: "", newFiles: [] });
     }
   }, [state, submitMessage]);
+  /* TODO: edit message */
   return (
     <div className="bg-gray-100 flex h-screen">
       <div className="z-80 bg-gray-100 border-r border-gray-300 md:p-4 p-2 md:block hidden md:w-1/4 w-full md:relative fixed h-full overflow-y-auto">
@@ -171,9 +176,9 @@ export const ClientPage: FC = () => {
                   key={i}
                   message={message}
                   currentUser={currentUser}
-                  onDeleteAttachment={(attachment) => {
-                    deleteAttachment(message, attachment);
-                  }}
+                  startEditingMessage={(message) => changeState({ messageToEdit: message })}
+                  onDeleteMessage={(message) => deleteMessage(message)}
+                  onDeleteAttachment={(attachment) => deleteAttachment(message, attachment)}
                 />
               ))
             )}
