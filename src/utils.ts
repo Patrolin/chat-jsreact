@@ -15,6 +15,22 @@ export function formatNumber(value: number, maxDecimalDigits = 1) {
   if (acc.endsWith(".") || acc.endsWith(",")) acc = acc.slice(0, -1);
   return acc;
 }
+export function formatDateRelative(date: Date, locale = "cs-CZ") {
+    const dayOffset = 24*60*60*1000;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - dayOffset);
+    const timeFormatter = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
+    const dateFormatter = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" });
+
+    if (date.getTime() >= today.getTime()) {
+      return `Today ${timeFormatter.format(date)}`;
+    } else if (date.getTime() >= yesterday.getTime()) {
+      return `Yesterday ${timeFormatter.format(date)}`;
+    } else {
+      return `${dateFormatter.format(date)} ${timeFormatter.format(date)}`;
+    }
+}
 export function downloadUrl(url: string, fileName: string) {
   const element = document.createElement("a");
   element.href = url;

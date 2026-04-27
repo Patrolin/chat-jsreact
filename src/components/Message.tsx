@@ -3,7 +3,7 @@ import { useClickAway } from "@/hooks/useClickAway";
 import { FC, useState } from "react";
 import { Icon } from "./Icon";
 import { API_LOCATION } from "@/config";
-import { formatSize } from "@/utils";
+import { formatDateRelative, formatSize } from "@/utils";
 import { LoadingSpinner } from "./LoadingSpinner";
 
 type MessageProps = {
@@ -43,8 +43,7 @@ export const Message: FC<MessageProps> = (props) => {
           <div>
             <span>{isSelf ? "You" : message.author}</span>
             <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
-              {/* TODO: format timestamp + is edited */}
-              {message.timestamp.split("T")[0]}
+              {formatDateRelative(new Date(message.timestamp))}{message.lastUpdateTimestamp !== message.timestamp ? " (edited)" : ""}
             </span>
           </div>
           {isSelf && (
