@@ -34,15 +34,10 @@ const RawAuthContext = createContext(null as AuthContext | null);
 export const AuthContextProvider: FC<PropsWithChildren> = (props) => {
   const [state, setToken] = useReducer(
     (state: AuthState, newToken: string | null) => {
-      cookieStore.set({
-        name: "offrecord-token",
-        value: newToken ?? "",
-        path: "/",
-        sameSite: "strict",
-      });
       if (newToken != null) localStorage.setItem(AUTH_STORAGE_ID, JSON.stringify(newToken));
       else localStorage.removeItem(AUTH_STORAGE_ID);
       Object.assign(state, { token: newToken, parsed: parseToken(newToken) });
+      setImageAuthToken(newToken);
       return state;
     },
     undefined,
@@ -52,8 +47,17 @@ export const AuthContextProvider: FC<PropsWithChildren> = (props) => {
         initialState.token = JSON.parse(localStorage.getItem(AUTH_STORAGE_ID) ?? "");
       } catch {}
       initialState.parsed = parseToken(initialState.token);
+      setImageAuthToken(initialState.token);
       return initialState;
     }
   );
   return <RawAuthContext value={{ state, setToken }}>{props.children}</RawAuthContext>;
 };
+function setImageAuthToken(token: string|null|undefined) {
+  cookieStore.set({
+    name: "offrecord-token",
+    value: token ?? "",
+    path: "/",
+    sameSite: "strict",
+  });
+}
