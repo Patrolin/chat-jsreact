@@ -5,5 +5,6 @@ npm i tailwindcss @tailwindcss/vite
 ```
 
 ```
+npm i
 npm run start
 ```
