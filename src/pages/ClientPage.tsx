@@ -35,9 +35,9 @@ export const ClientPage: FC = () => {
     selectedView: ChannelType.User,
     search: "",
     selectedChannel: { type: ChannelType.User, username: currentUser } as MessagesChannel,
-    newMessage: "",
+    newText: "",
     newFiles: [] as File[],
-    messageToEdit: null as OutboundChatMessage | null,
+    messageToEdit: undefined as OutboundChatMessage | undefined,
   });
   const sideView: React.ReactNode = (() => {
     if (state.selectedView === ChannelType.User) {
@@ -126,13 +126,12 @@ export const ClientPage: FC = () => {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const onSubmit = useCallback(() => {
     const inputElement = inputRef.current;
-    if (inputElement && state.newMessage) {
-      submitMessage(state.newMessage, state.newFiles);
+    if (inputElement && state.newText) {
+      submitMessage(state.newText, state.newFiles, state.messageToEdit);
       inputElement.value = "";
-      changeState({ newMessage: "", newFiles: [] });
+      changeState({ newText: "", newFiles: [], messageToEdit: undefined });
     }
   }, [state, submitMessage]);
-  /* TODO: edit message */
   return (
     <div className="bg-gray-100 flex h-screen">
       <div className="z-80 bg-gray-100 border-r border-gray-300 md:p-4 p-2 md:block hidden md:w-1/4 w-full md:relative fixed h-full overflow-y-auto">
@@ -191,6 +190,14 @@ export const ClientPage: FC = () => {
             onSubmit();
           }}
         >
+          {state.messageToEdit && (
+            <div className="flex items-center text-sm">
+              <button onClick={() => changeState({ messageToEdit: undefined })}>
+                <Icon name="cancel" className="text-red-500 text-lg" />
+              </button>
+              <p className="ml-2 font-semibold">Editing message</p>
+            </div>
+          )}
           <div className="flex mt-1 overflow-y-auto">
             {state.newFiles.map((newFile, i) => (
               <NewAttachment key={i} attachment={{ filename: newFile.name, size: newFile.size }} onRemove={() => removeFile(i)} />
@@ -227,7 +234,7 @@ export const ClientPage: FC = () => {
               className="flex-1 border border-l-0 border-gray-300 pl-1 pr-4 py-2 focus:outline-none resize-none text-area"
               autoFocus
               placeholder="Type your message..."
-              onInput={(event) => changeState({ newMessage: (event.target as HTMLTextAreaElement).value })}
+              onInput={(event) => changeState({ newText: (event.target as HTMLTextAreaElement).value })}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   if (!event.shiftKey) {

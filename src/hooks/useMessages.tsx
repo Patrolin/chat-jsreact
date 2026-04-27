@@ -40,7 +40,12 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
           break;
         case "addMessages":
           {
-            const newMessages = [...channelState.messages, ...update.messages];
+            const newMessages = [...channelState.messages];
+            for (const messageToAdd of update.messages) {
+              const index = messageToAdd.id != null ? newMessages.findIndex((v) => v.id === messageToAdd.id) : -1;
+              if (index === -1) newMessages.push(messageToAdd);
+              else newMessages.splice(index, 1, messageToAdd);
+            }
             newMessages.sort((a, b) => +a.timestamp - +b.timestamp);
             channelState.messages = newMessages;
             channelState.isFetching = update.isFetching ?? channelState.isFetching;
@@ -104,13 +109,21 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
 
   // callbacks
   const submitMessage = useCallback(
-    async (newMessage: string, newFiles: File[]) => {
+    async (newText: string, newFiles: File[], messageToEdit: OutboundChatMessage | undefined) => {
       const { destinationType, destination } = getChannelDestination(selectedChannel);
-      const message = await messageApi.messageCreate_Post({
-        destinationType,
-        destination,
-        message: { content: newMessage },
-      });
+      let message: OutboundChatMessage;
+      if (messageToEdit == null) {
+        message = await messageApi.messageCreate_Post({
+          destinationType,
+          destination,
+          message: { content: newText },
+        });
+      } else {
+        message = await messageApi.messageEdit_Post({
+          messageId: messageToEdit.id,
+          content: newText,
+        });
+      }
       updateChannel({ type: "addMessages", channelId: selectedChannelId, messages: [message] });
       const messageId = message.id;
       for (const newFile of newFiles) {

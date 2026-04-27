@@ -43,6 +43,7 @@ export const Message: FC<MessageProps> = (props) => {
           <div>
             <span>{isSelf ? "You" : message.author}</span>
             <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
+              {/* TODO: format timestamp + is edited */}
               {message.timestamp.split("T")[0]}
             </span>
           </div>
