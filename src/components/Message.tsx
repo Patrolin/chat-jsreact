@@ -2,7 +2,7 @@ import { AttachmentMetadataDto, OutboundChatMessage } from "@/api";
 import { useClickAway } from "@/hooks/useClickAway";
 import { FC, useState } from "react";
 import { Icon } from "./Icon";
-import { API_LOCATION } from "@/config";
+import { API_PATH } from "@/config";
 import { formatDateRelative, formatSize } from "@/utils";
 import { LoadingSpinner } from "./LoadingSpinner";
 
@@ -43,7 +43,8 @@ export const Message: FC<MessageProps> = (props) => {
           <div>
             <span>{isSelf ? "You" : message.author}</span>
             <span className={`text-xs pl-2 font-normal ${isSelf ? "text-gray-200" : "text-gray-500"}`}>
-              {formatDateRelative(new Date(message.timestamp))}{message.lastUpdateTimestamp !== message.timestamp ? " (edited)" : ""}
+              {formatDateRelative(new Date(message.timestamp))}
+              {message.lastUpdateTimestamp !== message.timestamp ? " (edited)" : ""}
             </span>
           </div>
           {isSelf && (
@@ -68,7 +69,7 @@ export const AttachmentImage: React.FC<AttachmentImageProps> = (props) => {
       <img
         className="rounded-lg mt-0.5"
         alt={attachment.filename}
-        src={`${API_LOCATION}/attachment/get/${attachment.id}`}
+        src={`${API_PATH}/attachment/get/${attachment.id}`}
         onLoad={() => setImageLoading(false)}
       />
       {imageLoading && (
@@ -120,7 +121,7 @@ const MessageAttachment: React.FC<MessageAttachmentProps> = (props) => {
           </button>
           <a
             className="p-1 rounded-full hover:bg-gray-200 flex items-center"
-            href={`${API_LOCATION}/attachment/get/${attachment.id}`}
+            href={`${API_PATH}/attachment/get/${attachment.id}`}
             download={attachment.filename}
           >
             <Icon name="download" className="text-gray-800 text-lg" />

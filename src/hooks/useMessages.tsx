@@ -105,7 +105,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
       });
     };
     asyncCallback();
-  }, [JSON.stringify(selectedChannel)]);
+  }, [selectedChannelId, JSON.stringify(selectedChannel)]);
 
   // callbacks
   const submitMessage = useCallback(
@@ -134,27 +134,27 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
         updateChannel({ type: "addAttachment", channelId: selectedChannelId, message, attachment });
       }
     },
-    [updateChannel]
+    [selectedChannelId, updateChannel]
   );
   const deleteMessage = useCallback(
     async (message: OutboundChatMessage) => {
       await messageApi.messageDelete_Post({ messageId: message.id });
       updateChannel({ type: "deleteMessage", channelId: selectedChannelId, message });
     },
-    [updateChannel]
+    [selectedChannelId, updateChannel]
   );
   const _addAttachment = useCallback(
     (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
       updateChannel({ type: "addAttachment", channelId: selectedChannelId, message, attachment });
     },
-    [updateChannel]
+    [selectedChannelId, updateChannel]
   );
   const deleteAttachment = useCallback(
     async (message: OutboundChatMessage, attachment: AttachmentMetadataDto) => {
       await attachmentApi.attachmentDelete_Post({ attachmentId: attachment.id });
       updateChannel({ type: "deleteAttachment", channelId: selectedChannelId, message, attachment });
     },
-    [updateChannel]
+    [selectedChannelId, updateChannel]
   );
 
   // onScroll
@@ -188,7 +188,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
         });
       }
     },
-    [channelStates, updateChannel]
+    [selectedChannelId, channelStates, updateChannel]
   );
   const { isFetching, messages } = channelStates[selectedChannelId];
   return { messagesLoading: isFetching, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment };
