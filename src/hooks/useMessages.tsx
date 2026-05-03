@@ -2,6 +2,9 @@ import { AttachmentControllerApi, AttachmentMetadataDto, MessageControllerApi, O
 import { CHAT_DEFAULT_PAGE_SIZE, CHAT_FETCH_SCROLL_DISTANCE_PX, getAuthConfigWithBearer } from "@/config";
 import { AuthContext } from "./useAuth";
 import { useCallback, useEffect, useReducer } from "react";
+import { useStompCallback } from "./useStomp";
+import { StompType } from "@/api_stomp/StompApiProvider";
+import { useCommon } from "./useCommon";
 
 export enum ChannelType {
   User = "USER",
@@ -16,7 +19,7 @@ function getChannelDestination(selectedChannel: MessagesChannel) {
   return { destinationType, destination };
 }
 
-export function useMessages(authContext: AuthContext, selectedChannel: MessagesChannel) {
+export function useMessages(selectedChannel: MessagesChannel) {
   const selectedChannelId = selectedChannel.type === ChannelType.User ? selectedChannel.username : String(selectedChannel.id);
   type MessagesUpdate =
     | { type: "isFetching"; channelId: string }
@@ -40,6 +43,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
           break;
         case "addMessages":
           {
+            console.log("ayaya.addMessages", update, channelState.messages.length);
             const newMessages = [...channelState.messages];
             for (const messageToAdd of update.messages) {
               const index = messageToAdd.id != null ? newMessages.findIndex((v) => v.id === messageToAdd.id) : -1;
@@ -83,6 +87,7 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
   }
 
   // load initial messages
+  const { authContext, currentUser } = useCommon();
   const messageApi = new MessageControllerApi(getAuthConfigWithBearer(authContext));
   const attachmentApi = new AttachmentControllerApi(getAuthConfigWithBearer(authContext));
   useEffect(() => {
@@ -190,6 +195,22 @@ export function useMessages(authContext: AuthContext, selectedChannel: MessagesC
     },
     [selectedChannelId, channelStates, updateChannel]
   );
+  // listen to stomp messages
+  useStompCallback<StompType>((type, event) => {
+    if (type === StompType.ReceiveUserMessage) {
+      const message = JSON.parse(event.body) as OutboundChatMessage;
+      const author = message.author;
+      if (author !== currentUser) {
+        updateChannel({
+          type: "addMessages",
+          channelId: author,
+          messages: [message],
+        });
+      }
+    }
+  });
+  // return messages for selected channel
   const { isFetching, messages } = channelStates[selectedChannelId];
+  console.log("ayaya.useMessages()", { selectedChannelId, messages });
   return { messagesLoading: isFetching, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment };
 }

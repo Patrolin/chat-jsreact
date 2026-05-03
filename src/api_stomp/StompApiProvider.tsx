@@ -10,16 +10,16 @@ const RECEIVE_SERVER_UPDATE_ENDPOINT = "/receive/server/update";
 const MESSAGE_ENDPOINT = "/message";
 const UPDATE_ENDPOINT = "/update";
 
+export enum StompType {
+  ReceiveUserMessage = "ReceiveUserMessage",
+}
 export const StompApiProvider: React.FC<PropsWithChildren> = (props) => {
   return (
     <StompProvider
       brokerURL={API_STOMP_PATH}
-      onConnect={({ client, auth }) => {
+      onConnect={(subscribe, { auth }) => {
         const username = auth.state.parsed.sub;
-        console.log("ayaya.onConnect", client, username);
-        client.subscribe(`/receive/user/${username}/message`, (message) => {
-          console.log("ayaya.message", message);
-        });
+        subscribe(StompType.ReceiveUserMessage, `/receive/user/${username}/message`);
       }}
     >
       {props.children}

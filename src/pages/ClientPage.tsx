@@ -98,7 +98,6 @@ export const ClientPage: FC = () => {
     }
   })();
   const { messagesLoading, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment } = useMessages(
-    authContext,
     state.selectedChannel
   );
   const channelTypeOptions: { value: ChannelType; label: string }[] = [
