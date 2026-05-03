@@ -21,7 +21,8 @@ export const StompApiProvider: React.FC<PropsWithChildren> = (props) => {
           console.log("ayaya.message", message);
         });
       }}
-      children={props.children}
-    />
+    >
+      {props.children}
+    </StompProvider>
   );
 };

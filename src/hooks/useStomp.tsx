@@ -30,7 +30,7 @@ export const StompProvider: React.FC<PropsWithChildren<StompOptions>> = (props) 
     // NOTE: close the connection if the user closes the page, or vite reloads the page
     window.addEventListener("beforeunload", () => state.deactivate());
   }, [token == null]);
-  return <RawStompContext value={state} children={props.children} />;
+  return <RawStompContext value={state}>{props.children}</RawStompContext>;
 };
 export function useStompContext(callback: (type: string) => void) {
   const client = useContext(RawStompContext);
