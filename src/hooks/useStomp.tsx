@@ -50,10 +50,12 @@ export function useStompContext(): StompContext | null {
 export function useStompCallback<MessageType extends string>(callback: StompCallback<MessageType>) {
   const stomp = useStompContext();
   if (stomp == null) return;
-  // NOTE: run immediately
+  /* NOTE: We need to run the setup immediately after cleanup, so that there is no point where the callback isn't registered.
+     Currently `useInsertionEffect()` does this in jsreact, which is unlikely to change. */
   useInsertionEffect(() => {
-    const index = stomp.callbacks.push(callback as StompCallback) - 1;
+    stomp.callbacks.push(callback as StompCallback);
     return () => {
+      const index = stomp.callbacks.indexOf(callback as StompCallback);
       stomp.callbacks.splice(index, 1);
     };
   }, [callback]);
