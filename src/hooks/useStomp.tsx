@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useContext, useInsertionEffect, useLayoutEffect } from "react";
+import { createContext, PropsWithChildren, useContext, useInsertionEffect, useLayoutEffect, useRef } from "react";
 import { Client, IFrame, IMessage } from "@stomp/stompjs";
 import { useChangeState } from "./useChangeState";
 import { AuthContext, useAuthContext } from "./useAuth";
@@ -50,13 +50,16 @@ export function useStompContext(): StompContext | null {
 export function useStompCallback<MessageType extends string>(callback: StompCallback<MessageType>) {
   const stomp = useStompContext();
   if (stomp == null) return;
-  /* NOTE: We need to run the setup immediately after cleanup, so that there is no point where the callback isn't registered.
-     Currently `useInsertionEffect()` does this in jsreact, which is unlikely to change. */
+  const prevCallbackRef = useRef(null as StompCallback | null);
   useInsertionEffect(() => {
-    stomp.callbacks.push(callback as StompCallback);
-    return () => {
-      const index = stomp.callbacks.indexOf(callback as StompCallback);
+    // unregister the previous callback
+    const prevCallback = prevCallbackRef.current;
+    if (prevCallback != null) {
+      const index = stomp.callbacks.indexOf(prevCallback);
       stomp.callbacks.splice(index, 1);
-    };
+    }
+    // register the callback
+    stomp.callbacks.push(callback as StompCallback);
+    prevCallbackRef.current = callback as StompCallback;
   }, [callback]);
 }
