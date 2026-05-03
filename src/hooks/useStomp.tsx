@@ -44,14 +44,17 @@ export const StompProvider: React.FC<PropsWithChildren<StompOptions>> = (props) 
   }, [token == null]);
   return <RawStompContext value={state}>{props.children}</RawStompContext>;
 };
+export function useStompContext(): StompContext | null {
+  return useContext(RawStompContext);
+}
 export function useStompCallback<MessageType extends string>(callback: StompCallback<MessageType>) {
-  const state = useContext(RawStompContext);
-  if (state == null) return;
+  const stomp = useStompContext();
+  if (stomp == null) return;
   // NOTE: run immediately
   useInsertionEffect(() => {
-    const index = state.callbacks.push(callback as StompCallback) - 1;
+    const index = stomp.callbacks.push(callback as StompCallback) - 1;
     return () => {
-      state.callbacks.splice(index, 1);
+      stomp.callbacks.splice(index, 1);
     };
   }, [callback]);
 }
