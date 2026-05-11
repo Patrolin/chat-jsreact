@@ -43,11 +43,11 @@ export function useGetRequest<T, D extends T | undefined = T | undefined>(
   state.options = options;
   // callbacks
   const _fetchAndRerender = useCallback(
-    (rerender: boolean) => {
+    (rerenderImmediately: boolean) => {
       const { fetch, refetchOn = [], onError, cacheId } = state.options;
       if (state.abortController != null) state.abortController.abort();
       const abortController = new AbortController();
-      changeState({ loading: true, prevRefetchOn: refetchOn, abortController }, rerender);
+      changeState({ loading: true, prevRefetchOn: refetchOn, abortController }, rerenderImmediately);
       return Promise.try(() => fetch(abortController.signal))
         .then((data: T) => {
           setCachedRequest(cacheId, refetchOn, data);

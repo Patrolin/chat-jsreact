@@ -1,6 +1,5 @@
 import { AttachmentControllerApi, AttachmentMetadataDto, MessageControllerApi, OutboundChatMessage } from "@/api";
 import { CHAT_DEFAULT_PAGE_SIZE, CHAT_FETCH_SCROLL_DISTANCE_PX, getAuthConfigWithBearer } from "@/config";
-import { AuthContext } from "./useAuth";
 import { useCallback, useEffect, useReducer } from "react";
 import { useStompCallback } from "./useStomp";
 import { StompType } from "@/api_stomp/StompApiProvider";
@@ -197,20 +196,34 @@ export function useMessages(selectedChannel: MessagesChannel) {
   );
   // listen to stomp messages
   useStompCallback<StompType>((type, event) => {
-    if (type === StompType.ReceiveUserMessage) {
-      const message = JSON.parse(event.body) as OutboundChatMessage;
-      const author = message.author;
-      if (author !== currentUser) {
-        updateChannel({
-          type: "addMessages",
-          channelId: author,
-          messages: [message],
-        });
-      }
+    const message = JSON.parse(event.body) as OutboundChatMessage;
+    switch (type) {
+      case StompType.ReceiveUserMessage:
+        {
+          const { author } = message;
+          if (author === currentUser) return;
+          updateChannel({
+            type: "addMessages",
+            channelId: author,
+            messages: [message],
+          });
+        }
+        break;
+      case StompType.ReceiveChannelMessage:
+        {
+          const { author, destination } = message;
+          if (author === currentUser) return;
+          updateChannel({
+            type: "addMessages",
+            channelId: destination,
+            messages: [message],
+          });
+        }
+        break;
     }
   });
   // return messages for selected channel
   const { isFetching, messages } = channelStates[selectedChannelId];
-  console.log("ayaya.useMessages()", { selectedChannelId, messages });
+  //console.log("useMessages()", { selectedChannelId, messages });
   return { messagesLoading: isFetching, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment };
 }
