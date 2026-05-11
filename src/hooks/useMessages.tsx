@@ -10,7 +10,7 @@ export enum ChannelType {
   Public = "CHANNEL",
 }
 export type UserChannel = { type: ChannelType.User; username: string };
-export type PublicChannel = { type: ChannelType.Public; id: number; name: string };
+export type PublicChannel = { type: ChannelType.Public; id: string };
 export type MessagesChannel = UserChannel | PublicChannel;
 function getChannelDestination(selectedChannel: MessagesChannel) {
   const destinationType = selectedChannel.type;

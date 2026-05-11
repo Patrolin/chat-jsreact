@@ -7,6 +7,7 @@ import { ClientPage } from "./pages/ClientPage";
 export type AppRoute = RouteProps<any> & {
   label: string;
 };
+/* See https://preactjs.com/guide/v10/preact-iso/#path-segment-matching */
 export const routes: AppRoute[] = [
   {
     label: "Dashboard",
@@ -20,7 +21,7 @@ export const routes: AppRoute[] = [
   },
   {
     label: "Client",
-    path: "/client",
+    path: "/client/:id*",
     component: ClientPage,
   },
   {

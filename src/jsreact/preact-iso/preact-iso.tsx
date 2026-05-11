@@ -1,23 +1,26 @@
-import { createContext, FC, Fragment, PropsWithChildren, useContext, useReducer, useRef } from "react";
+import { createContext, FC, Fragment, PropsWithChildren, useCallback, useContext, useReducer, useRef } from "react";
 
 // LocationContext
-function route(url: string, replace?: boolean): void {
-  const [_, forceRerender] = useReducer((v) => v, undefined);
-  if (replace) window.history.replaceState(undefined, "", url);
-  else window.history.pushState(undefined, "", url);
-  forceRerender();
-}
 type LocationContextType = {
   pathname: string;
   url: string;
   query: Record<string, string>;
-  route: typeof route;
+  route: (url: string, replace?: boolean) => void;
 };
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 // LocationProvider
 type LocationProviderProps = PropsWithChildren<{}>;
 export const LocationProvider: FC<LocationProviderProps> = (props) => {
+  const [_, forceRerender] = useReducer((v) => v, 1234);
+  const route = useCallback(
+    (url: string, replace?: boolean) => {
+      if (replace) window.history.replaceState(undefined, "", url);
+      else window.history.pushState(undefined, "", url);
+      forceRerender();
+    },
+    [forceRerender]
+  );
   const locationRef = useRef<LocationContextType>({
     pathname: "",
     url: "",
@@ -76,20 +79,23 @@ export const Router: FC<PropsWithChildren<RouterProps>> = (props) => {
     if (isDefault || path === "*") {
       defaultRoute = route;
     } else if (path) {
-      let patternOffset = 0;
-      let matchOffset = 0;
-      let isMatchingPath = true;
-      while (patternOffset < path.length || matchOffset < pathname.length) {
-        const pattern = path.slice(patternOffset).match(/:([^:/]*)/);
-        const stringEnd = pattern != null ? pattern.index! : Infinity;
-        isMatchingPath &&= path.slice(patternOffset, patternOffset + stringEnd) === pathname.slice(matchOffset, matchOffset + stringEnd);
-        if (pattern == null) break;
-        const match = pathname.slice(matchOffset).slice(pattern.index).match(/[^/]*/)!;
-        newParams[pattern[1]] = match[0];
-        patternOffset += pattern.index! + pattern[0].length;
-        matchOffset += pattern.index! + match[0].length;
+      let i = 0;
+      let regex_str = "";
+      const names: string[] = [];
+      for (const match of path.matchAll(/\/:[^/]*/g)) {
+        regex_str += path.slice(i, match.index);
+        const pattern = match[0];
+        let type = "";
+        if (pattern.endsWith("*")) type = "*";
+        if (pattern.endsWith("+")) type = "+";
+        if (pattern.endsWith("?")) type = "?";
+        names.push(type === "" ? pattern : pattern.slice(0, -1));
+        regex_str += `((?:/[^/]*)${type})`;
+        i = match.index + pattern.length;
       }
-      if (isMatchingPath) {
+      regex_str += path.slice(i);
+      const regex = new RegExp(`^${regex_str}$`);
+      if (pathname.match(regex) != null) {
         selectedRoute = route;
       }
     }

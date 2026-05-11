@@ -8,7 +8,8 @@ import { useChangeState } from "@/hooks/useChangeState";
 import { useCommon } from "@/hooks/useCommon";
 import { useGetRequest } from "@/hooks/useGetRequest";
 import { MessagesChannel, ChannelType, PublicChannel, useMessages, UserChannel } from "@/hooks/useMessages";
-import { FC, useCallback, useRef } from "react";
+import { usePathname } from "@/hooks/usePathname";
+import { FC, useCallback, useMemo, useRef } from "react";
 
 function isVisibleInSideView(label: string, search: string) {
   return search === "" || label.toLowerCase().includes(search);
@@ -31,13 +32,30 @@ export const ClientPage: FC = () => {
     },
   });
   // selected view
+  const pathname = window.location.pathname;
+  const defaultSelectedChannel: MessagesChannel = useMemo(() => {
+    const parts = pathname.slice("/client/".length).split("/");
+    if (parts.length < 2) return { type: ChannelType.User, username: currentUser };
+    const [type, destination] = parts;
+    let acc: MessagesChannel;
+    if (type === "channel") acc = { type: ChannelType.Public, id: destination };
+    else acc = { type: ChannelType.User, username: destination };
+    return acc;
+  }, [pathname, currentUser]);
   const [state, changeState] = useChangeState({
-    selectedView: ChannelType.User,
+    selectedView: defaultSelectedChannel.type,
     search: "",
-    selectedChannel: { type: ChannelType.User, username: currentUser } as MessagesChannel,
+    selectedChannel: defaultSelectedChannel,
     newText: "",
     newFiles: [] as File[],
     messageToEdit: undefined as OutboundChatMessage | undefined,
+  });
+  usePathname(() => {
+    if (state.selectedChannel.type === ChannelType.User) {
+      return `/client/user/${state.selectedChannel.username}`;
+    } else {
+      return `/client/channel/${state.selectedChannel.id}`;
+    }
   });
   const sideView: React.ReactNode = (() => {
     if (state.selectedView === ChannelType.User) {
@@ -76,11 +94,9 @@ export const ClientPage: FC = () => {
           <SideViewItem
             key={i}
             selected={isSelected}
-            onClick={() =>
-              changeState({
-                selectedChannel: { type: ChannelType.Public, id, name },
-              })
-            }
+            onClick={() => {
+              changeState({ selectedChannel: { type: ChannelType.Public, id } });
+            }}
           >
             <span>{name}</span>
           </SideViewItem>
@@ -94,7 +110,8 @@ export const ClientPage: FC = () => {
       const { username } = state.selectedChannel;
       return username === currentUser ? `Chatting with yourself` : `Chatting with ${username}`;
     } else {
-      return `Chatting in ${state.selectedChannel.name}`;
+      const { id } = state.selectedChannel;
+      return `Chatting in ${channels.find((v) => v.id === id)?.name ?? ""}`;
     }
   })();
   const { messagesLoading, messages, submitMessage, messagesOnScroll, deleteMessage, deleteAttachment } = useMessages(
@@ -130,6 +147,7 @@ export const ClientPage: FC = () => {
       changeState({ newText: "", newFiles: [], messageToEdit: undefined });
     }
   }, [state, submitMessage]);
+
   return (
     <div className="bg-gray-100 flex h-screen">
       <div className="z-80 bg-gray-100 border-r border-gray-300 md:p-4 p-2 md:block hidden md:w-1/4 w-full md:relative fixed h-full overflow-y-auto">
